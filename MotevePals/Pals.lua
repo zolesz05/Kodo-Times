@@ -98,6 +98,11 @@ local STYLE = {
     craftepic   = { gem = true, tex = "toast_craftepic",  v = 0.6953, c = { 0.80, 0.45, 1.00 }, med = "EPIC" },
     epicloot    = { gem = true, tex = "toast_epicloot",   v = 0.6953,  c = { 0.80, 0.45, 1.00 }, med = "LOOT" },
 }
+-- banner texture path for the player's faction: Alliance characters get the Alliance-flag copy
+-- (Textures\toast_<type>_alliance.tga, same layout), everyone else the Horde-flag original
+local function BannerTex(name)
+    return ns.TEX(UnitFactionGroup("player") == "Alliance" and name .. "_alliance" or name)
+end
 -- banner geometry (fractions of the width; from the 1024 px texture)
 local PORT_X, PORT_S = 0.2079, 0.121   -- portrait ring centre / diameter
 local MED_X = 0.8946                    -- medallion centre
@@ -321,7 +326,7 @@ local function Next()
     local st = STYLE[item.kind] or STYLE.levelup
     local f = item.fields or {}
     -- banner
-    T.bg:SetTexture(ns.TEX(st.tex))
+    T.bg:SetTexture(BannerTex(st.tex))
     T.bg:SetTexCoord(0, 1, 0, st.v)
     T:SetHeight(math.floor(TW * st.v / 4 + 0.5))   -- 1024 x 256 texture -> keep the aspect
     -- headline, line, medallion
@@ -424,7 +429,7 @@ function ns.Welcome()
     W:EnableMouse(true)
     W.bg = W:CreateTexture(nil, "BACKGROUND")
     W.bg:SetAllPoints()
-    W.bg:SetTexture(ns.TEX(st.tex)); W.bg:SetTexCoord(0, 1, 0, st.v)
+    W.bg:SetTexture(BannerTex(st.tex)); W.bg:SetTexCoord(0, 1, 0, st.v)
     W.shadow = ns.Slice(W, "shadow", 0.5, "BACKGROUND", -8):Fit(W, 26, 14)
     W.shadow:SetColor({ 0, 0, 0 }, 0)
     W.icon = W:CreateTexture(nil, "ARTWORK", nil, 1)
@@ -897,7 +902,7 @@ function ns.SetMoveMode(on)
     T.close:SetAlpha(0)
     if on then
         queue = {}
-        T.bg:SetTexture(ns.TEX("toast_levelup")); T.bg:SetTexCoord(0, 1, 0, STYLE.levelup.v)
+        T.bg:SetTexture(BannerTex(STYLE.levelup.tex)); T.bg:SetTexCoord(0, 1, 0, STYLE.levelup.v)
         T:SetHeight(math.floor(TW * STYLE.levelup.v / 4 + 0.5))
         T.title:SetText("MOTEVE PALS"); T.title:SetTextColor(1, 0.78, 0.25)
         SetBodyText("Húzd a helyére, a sarkánál méretezd, majd /mpal move"); T.med:SetText("")
