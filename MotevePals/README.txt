@@ -131,3 +131,4 @@ TUDNIVALÓK
         teszt-hírt küldő gomb, a gombok rendezve.
 0.9.27: a beállítások bezárásakor (vagy másik oldalra váltáskor) a felugró ablak mozgatása is befejeződik; a hely és a méret megmarad.
 0.9.28: belépés után a „Felugró ablak mozgatása” (és a /mpal move) már az első kattintásra megmutatja a felugró ablakot, hiba nélkül.
+0.9.29: Alliance karakternél Alliance-zászlós bannerek; új textúrafájlok után a játékot teljesen újra kell indítani.

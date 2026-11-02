@@ -2,7 +2,7 @@
 
 **Moteve Pals** egy közösségi World of Warcraft addon a WoW Forever klienshez. Vicces, díszes felugró híreket mutat a haverok szintlépéseiről, halálairól, szakma-mérföldköveiről és értékes tárgyairól, valamint megjeleníti az addont használó társakat a világtérképen.
 
-**Aktuális verzió: 0.9.28**
+**Aktuális verzió: 0.9.29**
 
 [Legfrissebb addon letöltése (ZIP)](downloads/MotevePals.zip?raw=true)
 
@@ -26,7 +26,7 @@ Interface/
         └── Textures/
 ```
 
-A mappanevet tartsd meg: a `MotevePals.toc` közvetlenül a `MotevePals` mappában legyen. Ha egy új addon még nem jelenik meg a listában, indítsd újra a klienst. Meglévő addon frissítése után `/reload` használható. A `WTF` könyvtárat tartsd meg, mert abban vannak a mentett beállítások.
+A mappanevet tartsd meg: a `MotevePals.toc` közvetlenül a `MotevePals` mappában legyen. Ha egy új addon még nem jelenik meg a listában, indítsd újra a klienst. Meglévő addon frissítése után `/reload` használható, kivéve ha a frissítés új textúrafájlokat hoz (pl. 0.9.29): ilyenkor a klienst teljesen újra kell indítani, különben az új képek nem töltődnek be. A `WTF` könyvtárat tartsd meg, mert abban vannak a mentett beállítások.
 
 ## Milyen hírek jelennek meg?
 
