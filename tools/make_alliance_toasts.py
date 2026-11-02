@@ -3,9 +3,12 @@
 The Horde flag is painted into every toast_<type>.tga, left of the frame. This script clears a fixed
 area around it (FLAG_AREA, measured once on the originals and shared by all 8 textures, see
 tools/preview/alliance_area.png) and puts the scaled-down Alliance flag from tools/assets/alliance_flag.png
-there. Every pixel outside FLAG_AREA stays byte-identical, so the banner geometry in Pals.lua (STYLE v,
-PORT_X/PORT_S, MED_X) holds for both factions. Needs Pillow:  python tools/make_alliance_toasts.py
+there, attached to the frame where the Horde flag is: anchors() measures both flags on every texture and the
+run fails when they are apart. Every pixel outside FLAG_AREA stays byte-identical, so the banner geometry in
+Pals.lua (STYLE v, PORT_X/PORT_S, MED_X) holds for both factions. Needs Pillow:
+python tools/make_alliance_toasts.py
 """
+import math
 from pathlib import Path
 import sys
 
@@ -23,14 +26,24 @@ TYPES = ['levelup', 'levelround', 'level60', 'death', 'skill', 'craftblue', 'cra
 FLAG_AREA = [
     (0, 0, 126, 24),      # rod and its shadow, up to the top-left corner post
     (0, 24, 117, 42),     # top of the cloth, left of the corner brace
-    (0, 42, 126, 153),    # cloth and the dark backdrop between it and the frame (only in some types)
+    (0, 42, 116, 153),    # cloth; its right edge is at x 115 in all 8 textures
     (0, 153, 107, 172),   # tattered end, left of the lower corner ornament
     (0, 172, 117, 192),   # tatter tips and ground shadow below the ornament
 ]
-# where the Alliance flag goes: left edge, top edge and width in texture pixels (height keeps the aspect)
-FLAG_X, FLAG_Y, FLAG_W = 2, 2, 122
+# kept as it is: the dark backdrop that joins the cloth to the frame (only in some types); the Horde-red
+# check covers it together with FLAG_AREA
+BACKDROP = (116, 42, 126, 153)
+# where the Alliance flag goes, from the Horde flag's anchors on the originals (anchors() checks them on
+# every texture): the cloth ends flush with the backdrop at x 116 (exclusive), the cloth's top where it
+# wraps over the rod is at row 9 like the Horde cloth's loops, and the cloth's tip is on the last visible row.
+# The flag keeps its aspect; the right finial is cut off at the corner post, where the Horde rod ends too.
+CLOTH_RIGHT, CLOTH_TOP = 116, 9
+CLOTH_ROWS = range(42, 140)     # where both cloths run straight down, above their tattered / pointed ends
+FINIAL_CUT = 840                # source column (after cropping) where the right spearhead flares out of the
+                                # rod's neck (x 808-836): cut there, the neck runs into the corner post
 VISIBLE_H = int(0.6953 * 256)   # smallest STYLE v in Pals.lua: rows below this are never shown
 SOURCE_MIN_ALPHA = 8            # source pixels fainter than this are haze around the artwork
+TOLERANCE = 3                   # px an Alliance anchor may sit from the Horde one (see anchors())
 
 
 def horde_red(p):
@@ -39,10 +52,10 @@ def horde_red(p):
     return a >= 32 and r >= 90 and g <= 0.4 * r and b <= 0.4 * r
 
 
-def area_mask():
+def area_mask(boxes=FLAG_AREA):
     mask = Image.new('L', (1024, 256), 0)
     draw = ImageDraw.Draw(mask)
-    for x0, y0, x1, y1 in FLAG_AREA:
+    for x0, y0, x1, y1 in boxes:
         draw.rectangle((x0, y0, x1 - 1, y1 - 1), fill=255)
     return mask
 
@@ -53,7 +66,9 @@ def load_flag():
         flag = key_black(flag.convert('RGB'))
     alpha = flag.getchannel('A').point(lambda v: 0 if v < SOURCE_MIN_ALPHA else min(255, v * 255 // 250))
     flag.putalpha(alpha)
-    return flag.crop(alpha.getbbox())
+    flag = flag.crop(alpha.getbbox())
+    flag.paste((0, 0, 0, 0), (FINIAL_CUT, 0, flag.width, flag.height))
+    return flag
 
 
 def key_black(rgb):
@@ -75,10 +90,32 @@ def key_black(rgb):
 def flag_layer(flag, mask):
     """The Alliance flag on a transparent 1024x256 canvas; transparent pixels next to it get its colour so
     the client's texture filtering does not draw a dark rim around it."""
-    h = round(flag.height * FLAG_W / flag.width)
-    small = flag.convert('RGBa').resize((FLAG_W, h), Image.LANCZOS).convert('RGBA')
+    alpha = flag.getchannel('A')
+    w, h = flag.size
+    solid = alpha.point(lambda v: 255 if v >= 128 else 0)
+    top = solid.crop((w // 2, 0, w // 2 + 1, h)).getbbox()[1]          # the cloth where it wraps over the rod
+    right = alpha.crop((0, h // 4, w, 3 * h // 4)).getbbox()[2]         # the cloth, below the rod
+    scale = (VISIBLE_H - CLOTH_TOP) / (h - top)
+    x0, y0 = CLOTH_RIGHT - right * scale, CLOTH_TOP - top * scale
+    # sub-pixel placement: resample the source region that lands on the canvas left of the corner post,
+    # on a transparent margin so the region may reach past the artwork
+    cw = mask.getbbox()[2]
+    region = (-x0 / scale, -y0 / scale, (cw - x0) / scale, (VISIBLE_H - y0) / scale)
+    pad = math.ceil(max(0, -region[0], -region[1], region[2] - w, region[3] - h)) + 1
+    padded = Image.new('RGBa', (w + 2 * pad, h + 2 * pad), (0, 0, 0, 0))
+    padded.paste(flag.convert('RGBa'), (pad, pad))
+    small = padded.resize((cw, VISIBLE_H), Image.LANCZOS, box=[v + pad for v in region]).convert('RGBA')
+    # resampling ringing around the edges is haze too
+    small.putalpha(small.getchannel('A').point(lambda v: 0 if v < SOURCE_MIN_ALPHA else v))
+    # the cloth's last column meets the kept backdrop but is soft (the source's edge leans by half a pixel
+    # here): make it opaque, so no seam shows through
+    sp = small.load()
+    for y in CLOTH_ROWS:
+        r, g, b, a = sp[CLOTH_RIGHT - 1, y]
+        if a:
+            sp[CLOTH_RIGHT - 1, y] = (r, g, b, 255)
     layer = Image.new('RGBA', (1024, 256), (0, 0, 0, 0))
-    layer.paste(small, (FLAG_X, FLAG_Y))
+    layer.paste(small, (0, 0))
     px, m = layer.load(), mask.load()
     bad = [(x, y) for y in range(256) for x in range(1024) if px[x, y][3] and (not m[x, y] or y >= VISIBLE_H)]
     if bad:
@@ -94,7 +131,22 @@ def flag_layer(flag, mask):
                     bleed[x, y] = tuple(sum(p[c] * p[3] for p in near) // wsum for c in range(3)) + (0,)
     for xy, p in bleed.items():
         px[xy] = p
-    return layer, (FLAG_X, FLAG_Y, FLAG_X + FLAG_W, FLAG_Y + h)
+    return layer, tuple(round(v) for v in (x0, y0, x0 + w * scale, y0 + h * scale))
+
+
+def anchors(im, cloth, area):
+    """Where a flag meets the frame: the cloth's right edge in rows 42-152, the cloth's top and its lowest
+    visible row (both within the cloth's columns), and the rod's top row and right end where it runs into
+    the top-left corner post (x 121-125, rows 0-23). Below the rod some Horde textures have a shadow, some
+    not, so its bottom is no anchor. cloth(pixel) tells the cloth apart; only pixels in area count."""
+    px, m = im.load(), area.load()
+    pts = [(x, y) for y in range(VISIBLE_H) for x in range(126) if m[x, y] and cloth(px[x, y])]
+    body = [x for x, y in pts if 42 <= y < 153]
+    left, right = min(body), max(body)
+    hang = [y for x, y in pts if left <= x <= right]
+    rod = [(x, y) for y in range(24) for x in range(121, 126) if px[x, y][3] >= 128]
+    return {'cloth right': right, 'cloth top': min(hang), 'cloth bottom': max(hang),
+            'rod top': min(y for x, y in rod), 'rod end': max(x for x, y in rod)}
 
 
 def header(path):
@@ -105,12 +157,14 @@ def header(path):
 
 def main():
     mask = area_mask()
+    horde_area = area_mask(FLAG_AREA + [BACKDROP])
     flag = load_flag()
     layer, box = flag_layer(flag, mask)
     print(f'source {source.relative_to(root)}: {flag.width}x{flag.height} after cropping to its alpha')
     print(f'flag area (x0, y0, x1, y1): {FLAG_AREA}; {sum(1 for v in mask.getdata() if v)} px')
-    print(f'Alliance flag placed at {box}, visible height {VISIBLE_H} px')
-    in_area = [i for i, v in enumerate(mask.getdata()) if v]
+    print(f'Alliance flag placed at {box} (cut off at x {mask.getbbox()[2]} and row {VISIBLE_H}),'
+          f' visible height {VISIBLE_H} px; kept backdrop {BACKDROP}')
+    in_area = [i for i, v in enumerate(horde_area.getdata()) if v]
     ok = True
     outputs = []
     for kind in TYPES:
@@ -129,19 +183,30 @@ def main():
         changed_outside = sum(1 for p, q, k in zip(a, b, m) if not k and p != q)
         red_before = sum(1 for i in in_area if horde_red(a[i]))
         red_after = sum(1 for i in in_area if horde_red(b[i]))
-        near = [(x, y) for y in range(192) for x in range(140) if not mask.getpixel((x, y)) and horde_red(a[y * 1024 + x])]
+        near = [(x, y) for y in range(192) for x in range(140)
+                if not horde_area.getpixel((x, y)) and horde_red(a[y * 1024 + x])]
         h0, h1 = header(src), header(dst)
         same = (new.size == orig.size == (1024, 256) and new.mode == orig.mode
                 and new.info.get('compression') == orig.info.get('compression')
                 and new.info.get('orientation') == orig.info.get('orientation') and h0 == h1)
-        ok = ok and same and changed_outside == 0 and red_after == 0
+        horde = anchors(orig.convert('RGBA'), horde_red, mask)
+        alliance = anchors(new.convert('RGBA'), lambda p: p[3] >= 32, mask)
+        off = {k: alliance[k] - v for k, v in horde.items() if abs(alliance[k] - v) > TOLERANCE}
+        npx = new.convert('RGBA').load()
+        seam = sum(1 for y in CLOTH_ROWS if npx[horde['cloth right'], y][3] < 250)
+        ok = ok and same and changed_outside == 0 and red_after == 0 and not off and seam == 0
         print(f'{dst.name}: {new.size[0]}x{new.size[1]} mode {new.mode} (orig {orig.mode}),'
               f' compression {new.info.get("compression")} (orig {orig.info.get("compression")}),'
               f' orientation {new.info.get("orientation")} (orig {orig.info.get("orientation")})')
         print(f'  TGA header {h1} {"== original" if h0 == h1 else "!= original " + str(h0)}')
         print(f'  pixels changed outside the flag area: {changed_outside}')
-        print(f'  Horde-red pixels in the flag area: {red_before} -> {red_after};'
+        print(f'  Horde-red pixels in the flag area and the backdrop: {red_before} -> {red_after};'
               f' Horde-red pixels of the original left outside it at x<140, y<192: {len(near)}')
+        print(f'  Horde flag anchors    {horde}')
+        print(f'  Alliance flag anchors {alliance}')
+        print(f'  anchors off by more than {TOLERANCE} px: {off or "none"};'
+              f' see-through pixels in the cloth at x {horde["cloth right"]},'
+              f' rows {CLOTH_ROWS.start}-{CLOTH_ROWS.stop - 1}: {seam}')
         outputs.append((kind, orig, new))
 
     # all 8 Alliance banners as the player sees them (about half size), and the flag area on each
@@ -156,6 +221,8 @@ def main():
             draw = ImageDraw.Draw(tile)
             for x0, y0, x1, y1 in FLAG_AREA:
                 draw.rectangle((x0, y0, x1 - 1, y1 - 1), outline=(0, 255, 0, 255))
+            x0, y0, x1, y1 = BACKDROP
+            draw.rectangle((x0, y0, x1 - 1, y1 - 1), outline=(0, 255, 255, 255))
             debug.paste(tile, (i * 288 + j * 144, 0))
     sheet.save(preview_dir / 'alliance_toasts.png', optimize=True)
     debug.save(preview_dir / 'alliance_area.png', optimize=True)
