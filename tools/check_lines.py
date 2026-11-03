@@ -12,7 +12,7 @@ except UnicodeDecodeError as err:
 
 PLACEHOLDERS = set('nlzsrigt')
 COUNTS = {
-    'levelup': 20, 'levelround': 5, 'level60': 9, 'death': 24, 'skill': 7,
+    'levelup': 20, 'levelround': 5, 'level60': 9, 'death': 36, 'skill': 7,
     'craftblue': 5, 'craftepic': 5, 'epicloot': 6, 'deathlegend': 8,
 }
 EXPECTED = {
@@ -57,6 +57,18 @@ EXPECTED = {
         '%n úgy be van baszva, mint macskát szarni.',
         '%n imádja a földet nyalogatni.',
         '%n nem élte túl, most már tényleg a föld alatt van a teljesítménye.',
+        '%n újraélesztése sikertelen. Talán legközelebb kevesebb hülyeséggel próbálkozik.',
+        '%n karaktere elhunyt. A szégyen azonban örök.',
+        '%n javítási költsége meghaladja a karakter piaci értékét.',
+        'Egy újabb mob büszkén mesélheti el, hogy legyőzött egy játékost. Az áldozat: %n.',
+        '%n temetésére senki nem érkezett. Mindenki farmol.',
+        'Critical failure: {%n}. Brain.dll not found.',
+        'A mob nem volt erős. %n volt gyenge.',
+        'A Spirit Healer már név szerint ismeri %n-t.',
+        '%n ismét visszatért a szellemvilágba. Úgy tűnik, ott már törzsvendég.',
+        '%n sikeresen tesztelte a mob sebzését. Saját magán.',
+        'A helyi élővilág újabb áldozatot követelt: %n.',
+        '%n ma is hozzájárult Azeroth hulladéktermeléséhez.',
     ],
     'skill': [
         '%n %s skillje elérte a %r-t. Végre ért valamihez.',
