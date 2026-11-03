@@ -1,4 +1,4 @@
-"""Check the [Pals] chat news lines: the name is a player link (left-click whispers), the banner keeps the plain name.
+"""Check the [Kodo Times] chat news lines: the name is a player link (left-click whispers), the banner keeps the plain name.
 
 Runs the addon in Lua 5.1 with the stub WoW API of tools/check_volume.py.
 Needs the lupa package (an embedded Lua 5.1):  uv run --with lupa python tools/check_chatlink.py
@@ -28,15 +28,15 @@ end
 function UnitFactionGroup() return "Alliance", "Alliance" end
 banners = {}
 function RecordBanners()
-    MotevePalsToast.text.SetText = function(self, s) banners[#banners + 1] = s end
-    rawset(MotevePalsToast, "moving", false)
+    KodoTimesToast.text.SetText = function(self, s) banners[#banners + 1] = s end
+    rawset(KodoTimesToast, "moving", false)
 end
 function ShowAll()   -- let every queued banner run its time
-    for _ = 1, 50 do MotevePalsToast.__scripts.OnUpdate(MotevePalsToast, 100) end
+    for _ = 1, 50 do KodoTimesToast.__scripts.OnUpdate(KodoTimesToast, 100) end
 end
 '''
 
-PALS = '|cffa88bff[Pals]|r '
+PALS = '|cffa88bff[Kodo Times]|r '
 failures = []
 
 
@@ -51,10 +51,10 @@ def fresh(saved=None):
     lua.execute(EXTRA)
     g = lua.globals()
     if saved is not None:
-        g.MotevePalsDB = lua.table_from(saved)
+        g.KodoTimesDB = lua.table_from(saved)
     for name in FILES:
-        g.LoadAddonFile((root / 'MotevePals' / name).read_text(encoding='utf-8'), name)
-    g.FireEvent('ADDON_LOADED', 'MotevePals')
+        g.LoadAddonFile((root / 'KodoTimes' / name).read_text(encoding='utf-8'), name)
+    g.FireEvent('ADDON_LOADED', 'KodoTimes')
     g.RecordBanners()
     return lua, g, g.NS
 
@@ -72,17 +72,17 @@ def message(kind, msg_id, name, killer='', level='12', item=('', '', '')):
     return '~'.join(['1', kind, msg_id, level, 'Barrens', '', '', *item, 'MAGE', killer, '', name])
 
 
-# /mpal test: every chat line links your own character, the banners are the same lines unlinked
+# /kodo test: every chat line links your own character, the banners are the same lines unlinked
 _, g, ns = fresh({'chat': True})
-g.SlashCmdList.MOTEVEPALS('test')
+g.SlashCmdList.KODOTIMES('test')
 chat, shown = news(g), banners(g)
 link = '|Hplayer:Tester|h[Tester]|h'
-check(len(chat) == 9 and len(shown) == 9, f'/mpal test printed {len(chat)} news and showed {len(shown)} banners, expected 9 each')
+check(len(chat) == 9 and len(shown) == 9, f'/kodo test printed {len(chat)} news and showed {len(shown)} banners, expected 9 each')
 for line, banner in zip(chat, shown):
     check('|Hplayer' not in banner, f'a banner has a player link: {banner!r}')
     check(line.replace(link, 'Tester') == banner, f'chat line {line!r} is not the banner {banner!r} with the name linked')
     check(line.count(link) == banner.count('Tester'), f'not every name is linked in {line!r}')
-check(sum(line.count(link) for line in chat) >= 8, 'the /mpal test chat lines have almost no player links')
+check(sum(line.count(link) for line in chat) >= 8, 'the /kodo test chat lines have almost no player links')
 death = chat[1]
 check(death.endswith('  |cffff8866Tettes: Defias Pillager (14)|r'), f'the death line lost its plain killer suffix: {death!r}')
 
@@ -127,13 +127,13 @@ check(news(g) == ['DING! |Hplayer:Odd-Other|h[Name]|h: 12'], f'sanitised link: {
 
 # chat off: no print, the banner as before
 _, g, ns = fixed({'chat': True})
-g.SlashCmdList.MOTEVEPALS('chat')
-check(g.MotevePalsDB.chat is False, '/mpal chat did not switch chat output off')
+g.SlashCmdList.KODOTIMES('chat')
+check(g.KodoTimesDB.chat is False, '/kodo chat did not switch chat output off')
 receive(g, message('levelup', '41', 'Higgsbozon Lightchaser'), 'Higgsbozon-Other')
 check(news(g) == [], f'chat off still printed {news(g)!r}')
 check(banners(g) == ['DING! Lightchaser: 12'], f'chat off banner: {list(g.banners.values())!r}')
 
-# your own news with /mpal self: whisper target is UnitName("player")
+# your own news with /kodo self: whisper target is UnitName("player")
 lua, g, ns = fixed({'chat': True, 'selfToast': True})
 lua.execute('NS.Deliver = function() end')   # nothing to send to here
 g.FireEvent('PLAYER_LEVEL_UP', 15)
@@ -145,4 +145,4 @@ if failures:
     for failure in failures:
         print('  ' + failure)
     sys.exit(1)
-print('PASS: [Pals] chat lines link the name to the sender (realm kept cross-realm), banners and killer suffix unchanged')
+print('PASS: [Kodo Times] chat lines link the name to the sender (realm kept cross-realm), banners and killer suffix unchanged')

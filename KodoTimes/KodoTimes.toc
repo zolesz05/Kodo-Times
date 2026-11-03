@@ -1,0 +1,15 @@
+## Interface: 16001
+## Title: |cff7fd8ffKodo|r |cffa88bffTimes|r
+## Notes: Funny pop-up news about your friends: level ups, deaths, profession milestones, blue/epic crafts.
+## Notes-huHU: Vicces felugró hírek a haverokról (szintlépés, halál, szakma, craft) + ki hol van a térképen.
+## Author: Zoltán Gosztonyi
+## Version: 0.10.0
+## SavedVariables: KodoTimesDB
+## SavedVariablesPerCharacter: KodoTimesChar
+## OptionalDeps: MotevePals
+
+Theme.lua
+Lines.lua
+Pals.lua
+Map.lua
+Options.lua

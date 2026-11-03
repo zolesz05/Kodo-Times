@@ -1,14 +1,13 @@
 ## Interface: 16001
-## Title: |cff7fd8ffMo|r|cffa88bffteve|r Pals
-## Notes: Funny pop-up news about your friends: level ups, deaths, profession milestones, blue/epic crafts.
-## Notes-huHU: Vicces felugró hírek a haverokról (szintlépés, halál, szakma, craft) + ki hol van a térképen.
+## Title: |cff7fd8ffKodo|r |cffa88bffTimes|r – régi beállítások
+## Notes: Kodo Times: carries over the settings of the old version. Loads nothing - keep it enabled.
+## Notes-huHU: Kodo Times – régi beállítások átvitele, ne kapcsold ki.
 ## Author: Zoltán Gosztonyi
-## Version: 0.9.37
+## Version: 0.10.0
 ## SavedVariables: MotevePalsDB
 ## SavedVariablesPerCharacter: MotevePalsChar
+# The addon was renamed to Kodo Times (folder KodoTimes). This stub only keeps the client loading the
+# old saved variables, so KodoTimes (OptionalDeps: MotevePals) can copy them once into its own.
+# Unzipped over the old install, this TOC replaces the old one: the old files stay on disk unloaded.
 
-Theme.lua
-Lines.lua
-Pals.lua
-Map.lua
-Options.lua
+MotevePals.lua

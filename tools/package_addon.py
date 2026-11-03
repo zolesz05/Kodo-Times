@@ -1,21 +1,27 @@
-"""Publish only the latest installable addon ZIP at a permanent download path."""
+"""Publish only the latest installable addon ZIP at a permanent download path: downloads/KodoTimes.zip.
+
+The ZIP holds the addon (KodoTimes/) and the MotevePals/ bridge stub, which keeps the client loading the saved
+variables of the old name so KodoTimes can copy them once.
+"""
 from pathlib import Path
 import re
 import zipfile
 
 root = Path(__file__).resolve().parents[1]
-addon = root / 'MotevePals'
+FOLDERS = [root / 'KodoTimes', root / 'MotevePals']
 downloads = root / 'downloads'
-toc = (addon / 'MotevePals.toc').read_text(encoding='utf-8')
-version = re.search(r'^## Version:\s*(\S+)', toc, re.MULTILINE).group(1)
-for line in toc.splitlines():
-    if line.strip() and not line.startswith('#'):
-        assert (addon / line.strip()).is_file(), f'Missing TOC entry: {line}'
+version = re.search(r'^## Version:\s*(\S+)', (root / 'KodoTimes' / 'KodoTimes.toc').read_text(encoding='utf-8'),
+                    re.MULTILINE).group(1)
+for folder in FOLDERS:
+    toc = (folder / f'{folder.name}.toc').read_text(encoding='utf-8')
+    for line in toc.splitlines():
+        if line.strip() and not line.startswith('#'):
+            assert (folder / line.strip()).is_file(), f'Missing TOC entry in {folder.name}.toc: {line}'
 
 downloads.mkdir(exist_ok=True)
-target = downloads / 'MotevePals.zip'
-pending = downloads / 'MotevePals.zip.tmp'
-files = sorted(p for p in addon.rglob('*') if p.is_file())
+target = downloads / 'KodoTimes.zip'
+pending = downloads / 'KodoTimes.zip.tmp'
+files = [p for folder in FOLDERS for p in sorted(p for p in folder.rglob('*') if p.is_file())]
 with zipfile.ZipFile(pending, 'w', zipfile.ZIP_DEFLATED) as archive:
     for path in files:
         archive.write(path, path.relative_to(root).as_posix())
@@ -26,8 +32,8 @@ with zipfile.ZipFile(pending) as archive:
         assert archive.read(path.relative_to(root).as_posix()) == path.read_bytes()
 pending.replace(target)
 
-# Only old, versioned addon downloads in this exact directory are removed.
-for path in downloads.glob('MotevePals-*.zip'):
+# Old downloads in this exact directory are removed: versioned KodoTimes ZIPs and every ZIP of the old name.
+for path in [*downloads.glob('KodoTimes-*.zip'), *downloads.glob('MotevePals*.zip')]:
     assert path.resolve().parent == downloads.resolve()
     if path.is_file():
         path.unlink()
@@ -35,6 +41,6 @@ for path in downloads.glob('MotevePals-*.zip'):
 readme = root / 'README.md'
 text = readme.read_text(encoding='utf-8')
 text = re.sub(r'\*\*Aktuális verzió: [^*]+\*\*', f'**Aktuális verzió: {version}**', text)
-text = re.sub(r'downloads/MotevePals(?:-[0-9.]+)?\.zip\?raw=true', 'downloads/MotevePals.zip?raw=true', text)
+text = re.sub(r'downloads/(?:MotevePals|KodoTimes)(?:-[0-9.]+)?\.zip\?raw=true', 'downloads/KodoTimes.zip?raw=true', text)
 readme.write_text(text, encoding='utf-8')
-print(f'PASS: {version}; {len(files)} verified addon files; downloads/MotevePals.zip is the only current addon download.')
+print(f'PASS: {version}; {len(files)} verified addon files; downloads/KodoTimes.zip is the only current addon download.')

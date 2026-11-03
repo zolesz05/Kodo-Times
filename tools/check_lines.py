@@ -1,10 +1,10 @@
-"""Check the pop-up lines in MotevePals/Lines.lua: UTF-8, lists, counts, texts and placeholders."""
+"""Check the pop-up lines in KodoTimes/Lines.lua: UTF-8, lists, counts, texts and placeholders."""
 from pathlib import Path
 import re
 import sys
 
 root = Path(__file__).resolve().parents[1]
-path = root / 'MotevePals' / 'Lines.lua'
+path = root / 'KodoTimes' / 'Lines.lua'
 try:
     text = path.read_bytes().decode('utf-8')
 except UnicodeDecodeError as err:

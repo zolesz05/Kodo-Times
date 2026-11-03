@@ -1,4 +1,4 @@
--- Moteve Pals - the lines that pop up. Placeholders:
+-- Kodo Times - the lines that pop up. Placeholders:
 --   %n = name   %l = level   %z = zone   %s = skill   %r = skill rank   %i = item
 --   %g = the legend of the dead player's class   %t = the legend's title (see ns.LEGENDS below)
 -- Add your own freely: one line per entry, the addon picks one at random (never the same twice in a row).
@@ -140,7 +140,7 @@ ns.LINES_AT = {
 
 -- Class legends: when someone dies, sometimes the legend of their class weighs in.
 -- Add your own: CLASS = { name = "Name", title = "a ... istene/királya" }
--- (in game too: /mpal legend paladin SADISS a paladinok istene)
+-- (in game too: /kodo legend paladin SADISS a paladinok istene)
 ns.LEGENDS = {
     PALADIN = { name = "SADISS", title = "a paladinok istene" },
     SHAMAN  = { name = "Chainsaw", title = "a shamanok királya" },

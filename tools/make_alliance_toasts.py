@@ -15,7 +15,7 @@ import sys
 from PIL import Image, ImageDraw
 
 root = Path(__file__).resolve().parents[1]
-textures = root / 'MotevePals' / 'Textures'
+textures = root / 'KodoTimes' / 'Textures'
 source = root / 'tools' / 'assets' / 'alliance_flag.png'
 preview_dir = root / 'tools' / 'preview'
 TYPES = ['levelup', 'levelround', 'level60', 'death', 'skill', 'craftblue', 'craftepic', 'epicloot']

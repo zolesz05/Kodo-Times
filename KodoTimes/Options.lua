@@ -1,10 +1,10 @@
--- Moteve Pals - page in the game's Options > AddOns list, with every on/off switch.
+-- Kodo Times - page in the game's Options > AddOns list, with every on/off switch.
 local ADDON_NAME, ns = ...
 local format = string.format
 
 local OPTIONS = {
     { head = "Hírek" },
-    { key = "enabled",      text = "Moteve Pals bekapcsolva",              tip = "Ha ki van kapcsolva, nem küld és nem mutat semmit." },
+    { key = "enabled",      text = "Kodo Times bekapcsolva",              tip = "Ha ki van kapcsolva, nem küld és nem mutat semmit." },
     { key = "selfToast",    text = "A saját híreim nálam is ugorjanak fel", tip = "Alapból csak a haverok látják, ami veled történik." },
     { key = "chat",         text = "Hírek a chatbe is",                     tip = "A felugró hír szövege a chatablakba is bekerül." },
     { key = "sound",        text = "Hang a felugró híreknél",               tip = "WoW-os hang: halálnál raid warning, szintlépésnél level up.\nAlatta a hangerő: csak az addon saját hangjaié.", below = 30 },
@@ -51,6 +51,7 @@ function ns.ApplyPreset(id, on, quiet)
     local pr = PRESETS[id]
     if not pr then return end
     local db = ns.DB()
+    if not db then return end   -- not loaded (or dormant next to the old addon): touch no CVar
     if on then RememberPrev(id) end
     for name, v in pairs(pr.cvars) do
         if on then SetCV(name, v)
@@ -63,18 +64,18 @@ function ns.ApplyPreset(id, on, quiet)
 end
 function ns.ApplyWeed(on, quiet) ns.ApplyPreset("weed", on, quiet) end
 
-local panel = CreateFrame("Frame", "MotevePalsOptions")
-panel.name = "Moteve Pals"
+local panel = CreateFrame("Frame", "KodoTimesOptions")
+panel.name = "Kodo Times"
 panel:Hide()
 
 local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 ns.SetFontSafe(title, ns.FONT_BODY_BOLD, 18)
 title:SetPoint("TOPLEFT", 16, -16)
-title:SetText("Moteve Pals")
+title:SetText("Kodo Times")
 local sub = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
 ns.SetFontSafe(sub, ns.FONT_BODY, 12)
 sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
-sub:SetText("Vicces hírek a haverokról, és ki hol van a térképen. Parancsok: /mpal")
+sub:SetText("Vicces hírek a haverokról, és ki hol van a térképen. Parancsok: /kodo")
 
 local checks = {}
 local volumeAnchor, UpdateVolumeState   -- the sound checkbox (the volume row hangs under it), set below
@@ -184,7 +185,7 @@ local function SetVolume(v)
         ns.PlayKind("welcome")
     end
 end
-local okSlider, slider = pcall(CreateFrame, "Slider", "MotevePalsVolumeSlider", panel, "OptionsSliderTemplate")
+local okSlider, slider = pcall(CreateFrame, "Slider", "KodoTimesVolumeSlider", panel, "OptionsSliderTemplate")
 if okSlider and slider then
     volSlider = slider
     slider:SetWidth(150)
@@ -193,7 +194,7 @@ if okSlider and slider then
     slider:SetValueStep(5)
     if slider.SetObeyStepOnDrag then slider:SetObeyStepOnDrag(true) end
     for _, part in ipairs({ "Low", "High", "Text" }) do   -- the template's own texts: we have ours
-        local fs = rawget(slider, part) or _G["MotevePalsVolumeSlider" .. part]
+        local fs = rawget(slider, part) or _G["KodoTimesVolumeSlider" .. part]
         if fs and fs.SetText then fs:SetText("") end
     end
     slider:SetScript("OnValueChanged", function(_, value)
@@ -239,7 +240,7 @@ local function Action(txt, cmd, x, yy)
     b:SetPoint("TOPLEFT", x, yy)
     b:SetText(txt)
     ns.SetFontSafe(b:GetFontString(), ns.FONT_BODY, 12)
-    b:SetScript("OnClick", function() if SlashCmdList.MOTEVEPALS then SlashCmdList.MOTEVEPALS(cmd) end end)
+    b:SetScript("OnClick", function() if SlashCmdList.KODOTIMES then SlashCmdList.KODOTIMES(cmd) end end)
     return b
 end
 Action("Minta-hírek (nálam)", "test", 16, y)
@@ -286,7 +287,7 @@ reg:SetScript("OnEvent", function()
     end
 end)
 
--- open it from chat: /mpal opciok
+-- open it from chat: /kodo opciok
 function ns.OpenOptions()
     if Settings and Settings.OpenToCategory and ns.optionsCategory then
         local id = ns.optionsCategory.GetID and ns.optionsCategory:GetID() or ns.optionsCategory.ID
