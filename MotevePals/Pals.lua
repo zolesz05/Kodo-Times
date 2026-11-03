@@ -898,8 +898,9 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3, a4)
         end)
     elseif e == "PLAYER_LEVEL_UP" then
         local lv = tonumber(a1) or UnitLevel("player")
-        local kind = (lv >= 60 and "level60") or (lv % 10 == 0 and "levelround") or "levelup"
-        Announce(kind, { level = lv })
+        -- csak 5 szintenként (5, 10 ... 55) és 60-nál megy hír; a többi szintnél semmi
+        local kind = (lv >= 60 and "level60") or (lv % 10 == 0 and "levelround") or (lv % 5 == 0 and "levelup") or nil
+        if kind then Announce(kind, { level = lv }) end
     elseif e == "PLAYER_DEAD" then
         Announce("death", { zone = GetRealZoneText and GetRealZoneText() or "", killer = TakeKiller() })
     elseif e == "SKILL_LINES_CHANGED" then

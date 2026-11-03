@@ -13,7 +13,7 @@ HOGY NÉZ KI
   A hátterek a Textures\toast_*.tga fájlok (a megadott terv alapján).
 
 MIRŐL SZÓL
-  - Szintlépés (kerek szintnél és 60-nál külön szövegek)
+  - Szintlépés, csak 5 szintenként (5, 10, 15 ... 55) és 60-nál (kerek szintnél és 60-nál külön szövegek)
   - Halál (melyik zónában)
   - Szakma-mérföldkő: 50, 75, 100, 125 ... pontnál (csak szakmák, a fegyverskillek nem)
   - Kék vagy epic craft ("You create: ...")
@@ -136,3 +136,5 @@ TUDNIVALÓK
         nem volt mozgatva vagy átméretezve, egyszer odakerül; az elhúzott vagy átméretezett hely és méret megmarad.
 0.9.31: új és átírt beszólások (szintlépés, 60-as szint, halál, szakma, epic loot); a 10., 20., 30., 40. és 50. szint
         saját sort is kapott, ami csak azon a szinten jöhet ki. Az új sorokat csak az látja, akinél már a 0.9.31 fut.
+0.9.32: szintlépés-hír (a haveroknak és a saját értesítő is) csak 5 szintenként (5, 10, 15 ... 55) és 60-nál megy ki;
+        a többi szintnél nincs hír. A régebbi verziójú haverok szintlépései továbbra is minden szintnél megjelennek.
