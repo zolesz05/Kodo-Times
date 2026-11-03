@@ -2,7 +2,7 @@
 
 **Moteve Pals** egy közösségi World of Warcraft addon a WoW Forever klienshez. Vicces, díszes felugró híreket mutat a haverok szintlépéseiről, halálairól, szakma-mérföldköveiről és értékes tárgyairól, valamint megjeleníti az addont használó társakat a világtérképen.
 
-**Aktuális verzió: 0.9.30**
+**Aktuális verzió: 0.9.31**
 
 [Legfrissebb addon letöltése (ZIP)](downloads/MotevePals.zip?raw=true)
 
@@ -32,7 +32,7 @@ A mappanevet tartsd meg: a `MotevePals.toc` közvetlenül a `MotevePals` mappáb
 
 | Esemény | Megjelenítés |
 | --- | --- |
-| Szintlépés | Új szint, külön szövegek kerek szinteknél és 60-nál |
+| Szintlépés | Csak 5 szintenként (5, 10, 15 … 55) és 60-nál; külön szövegek kerek szinteknél és 60-nál |
 | Halál | Halálhír, zóna és az elérhető támadóadatok |
 | Szakma-mérföldkő | Szakmapontok, szakmaikonnal; fegyverskillek nélkül |
 | Kék / epic craft | Elkészített tárgy, tárgyikonnal |
