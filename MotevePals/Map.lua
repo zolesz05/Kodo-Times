@@ -17,11 +17,7 @@ local diag = { sent = 0, lastSent = 0, lastPos = nil, recv = {} }   -- for /mpal
 ns.PalPositions = pals
 
 local function Now() return GetTime() end
-local function ClassColor(class)
-    local c = class and RAID_CLASS_COLORS and RAID_CLASS_COLORS[class]
-    if c then return c.r, c.g, c.b end
-    return 0.9, 0.8, 0.6
-end
+local ClassColor = ns.ClassColor
 local function Ago(sec)
     sec = floor(sec)
     if sec < 15 then return "épp most" end
