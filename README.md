@@ -4,7 +4,7 @@
 
 **Aktuális verzió: 0.10.0**
 
-[Legfrissebb addon letöltése (ZIP)](downloads/KodoTimes.zip?raw=true)
+[Legfrissebb addon letöltése (ZIP)](https://github.com/zolesz05/Kodo-Times/raw/main/downloads/KodoTimes.zip)
 
 A `downloads` mappában csak a legfrissebb telepíthető `KodoTimes.zip` szerepel. Frissítéskor ugyanaz a letöltési link használható. A 0.10.0-s átnevezéssel a link is új lett: a régi `downloads/MotevePals.zip` már nem létezik.
 

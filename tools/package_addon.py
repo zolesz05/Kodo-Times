@@ -38,9 +38,11 @@ for path in [*downloads.glob('KodoTimes-*.zip'), *downloads.glob('MotevePals*.zi
     if path.is_file():
         path.unlink()
 
+DOWNLOAD_URL = 'https://github.com/zolesz05/Kodo-Times/raw/main/downloads/KodoTimes.zip'
 readme = root / 'README.md'
 text = readme.read_text(encoding='utf-8')
 text = re.sub(r'\*\*Aktuális verzió: [^*]+\*\*', f'**Aktuális verzió: {version}**', text)
-text = re.sub(r'downloads/(?:MotevePals|KodoTimes)(?:-[0-9.]+)?\.zip\?raw=true', 'downloads/KodoTimes.zip?raw=true', text)
+# absolute link: the relative downloads/...?raw=true form gives 404 on GitHub
+text = re.sub(r'\]\([^)]*downloads/(?:MotevePals|KodoTimes)(?:-[0-9.]+)?\.zip(?:\?raw=true)?\)', '](' + DOWNLOAD_URL + ')', text)
 readme.write_text(text, encoding='utf-8')
 print(f'PASS: {version}; {len(files)} verified addon files; downloads/KodoTimes.zip is the only current addon download.')
