@@ -65,7 +65,7 @@ Az értesítések díszes fantasy keretet, hírtípusonként saját hátteret, b
 - A `/kodo move` paranccsal mozgatható, és közben a jobb alsó sarkánál fogva vagy egérgörgővel arányosan átméretezhető (0,5–2×; jobb kattintás a sarokra = 1,0× méret); újra kiadva vagy a beállítások bezárásával befejezhető a mozgatás. A méret és a hely mentődik.
 - A láthatósági idő **1–60 másodperc** között állítható, például `/kodo time 8`.
 - A játék saját hangeffektjei, a chatbe kiírás és a saját hírek megjelenítése külön kapcsolhatók.
-- A chatbe írt `[Kodo Times]` hírekben a karakter neve kattintható: bal kattintásra suttogást nyit neki, mint a játék saját névlinkjei.
+- A chatbe írt `[Kodo Times]` hírekben a karakter neve a kasztszínében jelenik meg (ismeretlen kasztnál világos homokszínben), és kattintható: bal kattintásra suttogást nyit neki, mint a játék saját névlinkjei.
 - Az addon saját hangjainak hangereje **0–100%** között állítható (a beállítópanelen vagy például `/kodo volume 50`); 0% néma, 100% az eddigi hangerő, a játék többi hangja nem változik.
 
 ## Haverok elérése
@@ -148,7 +148,7 @@ Az addon hangerő-kezelését (mentés, 0/100%, a kölcsönvett hangcsatorna vis
 uv run --with lupa python tools/check_volume.py
 ```
 
-A chatbe írt hírek névlinkjét (suttogási cél, más realmről érkezőnél a realm is, a felugró szöveg változatlan) így ellenőrzi:
+A chatbe írt hírek névlinkjét (kasztszín, suttogási cél, más realmről érkezőnél a realm is, a felugró szöveg változatlan) így ellenőrzi:
 
 ```sh
 uv run --with lupa python tools/check_chatlink.py

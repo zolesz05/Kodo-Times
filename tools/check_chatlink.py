@@ -1,4 +1,4 @@
-"""Check the [Kodo Times] chat news lines: the name is a player link (left-click whispers), the banner keeps the plain name.
+"""Check the [Kodo Times] chat news lines: the name is a class-coloured player link (left-click whispers), the banner keeps the plain name.
 
 Runs the addon in Lua 5.1 with the stub WoW API of tools/check_volume.py.
 Needs the lupa package (an embedded Lua 5.1):  uv run --with lupa python tools/check_chatlink.py
@@ -26,6 +26,7 @@ function Ambiguate(name, mode)
     return (name:gsub("%-Home$", ""))
 end
 function UnitFactionGroup() return "Alliance", "Alliance" end
+RAID_CLASS_COLORS = { MAGE = { r = 0.25, g = 0.78, b = 0.92 }, PALADIN = { r = 0.96, g = 0.55, b = 0.73 } }
 banners = {}
 function RecordBanners()
     KodoTimesToast.text.SetText = function(self, s) banners[#banners + 1] = s end
@@ -37,6 +38,19 @@ end
 '''
 
 PALS = '|cffa88bff[Kodo Times]|r '
+# the same values as RAID_CLASS_COLORS in EXTRA; None is the fallback for an unknown class
+CLASS_RGB = {'MAGE': (0.25, 0.78, 0.92), 'PALADIN': (0.96, 0.55, 0.73), None: (0.9, 0.8, 0.6)}
+
+
+def colour(cls):
+    """The |cffRRGGBB prefix ns.Hex gives (Lua's %02x truncates like int())."""
+    return '|cff' + ''.join(f'{int(c * 255):02x}' for c in CLASS_RGB.get(cls, CLASS_RGB[None]))
+
+
+def plink(target, label, cls='MAGE'):
+    return f'{colour(cls)}|Hplayer:{target}|h[{label}]|h|r'
+
+
 failures = []
 
 
@@ -68,21 +82,24 @@ def banners(g):
     return list(g.banners.values())
 
 
-def message(kind, msg_id, name, killer='', level='12', item=('', '', '')):
-    return '~'.join(['1', kind, msg_id, level, 'Barrens', '', '', *item, 'MAGE', killer, '', name])
+def message(kind, msg_id, name, killer='', level='12', item=('', '', ''), cls='MAGE'):
+    return '~'.join(['1', kind, msg_id, level, 'Barrens', '', '', *item, cls, killer, '', name])
 
 
-# /kodo test: every chat line links your own character, the banners are the same lines unlinked
+# /kodo test: every chat line links your own character in its class colour (the deathlegend test is a PALADIN),
+# the banners are the same lines unlinked and uncoloured
 _, g, ns = fresh({'chat': True})
 g.SlashCmdList.KODOTIMES('test')
 chat, shown = news(g), banners(g)
-link = '|Hplayer:Tester|h[Tester]|h'
 check(len(chat) == 9 and len(shown) == 9, f'/kodo test printed {len(chat)} news and showed {len(shown)} banners, expected 9 each')
-for line, banner in zip(chat, shown):
+for i, (line, banner) in enumerate(zip(chat, shown)):
+    link = plink('Tester', 'Tester', 'PALADIN' if i == 2 else 'MAGE')
     check('|Hplayer' not in banner, f'a banner has a player link: {banner!r}')
-    check(line.replace(link, 'Tester') == banner, f'chat line {line!r} is not the banner {banner!r} with the name linked')
+    check(colour('MAGE') not in banner and colour('PALADIN') not in banner, f'a banner has a class colour: {banner!r}')
+    check(line.replace(link, 'Tester') == banner, f'chat line {line!r} is not the banner {banner!r} with the name linked in {link!r}')
     check(line.count(link) == banner.count('Tester'), f'not every name is linked in {line!r}')
-check(sum(line.count(link) for line in chat) >= 8, 'the /kodo test chat lines have almost no player links')
+    check(line.count('|Hplayer') == line.count(link), f'a player link is not in the class colour in {line!r}')
+check(sum(line.count('|Hplayer') for line in chat) >= 8, 'the /kodo test chat lines have almost no player links')
 death = chat[1]
 check(death.endswith('  |cffff8866Tettes: Defias Pillager (14)|r'), f'the death line lost its plain killer suffix: {death!r}')
 
@@ -107,7 +124,7 @@ receive(g, message('levelup', '11', 'Higgsbozon Lightchaser'), 'Higgsbozon-Other
 receive(g, message('death', '12', 'Higgsbozon Lightchaser', killer='Hogger'), 'Higgsbozon-Other')
 receive(g, message('epicloot', '13', 'Higgsbozon Lightchaser', item=('2243', 'Hand of Edward the Odd', '4')), 'Higgsbozon-Other')
 chat, shown = news(g), banners(g)
-link = '|Hplayer:Higgsbozon-Other|h[Lightchaser]|h'
+link = plink('Higgsbozon-Other', 'Lightchaser')
 item = '|cffa335ee|Hitem:2243::::::::|h[Hand of Edward the Odd]|h|r'
 check(chat == [f'DING! {link}: 12', f'RIP {link}, Barrens  |cffff8866Tettes: Hogger|r', f'EPIC {link}: {item}'],
       f'cross-realm chat lines: {chat!r}')
@@ -117,13 +134,13 @@ check(shown == ['DING! Lightchaser: 12', 'RIP Lightchaser, Barrens  |cffff8866Te
 # a pal from our realm: no realm in the whisper target
 _, g, ns = fixed({'chat': True})
 receive(g, message('levelup', '21', 'Miss Mcimbtyw'), 'Miss-Home')
-check(news(g) == ['DING! |Hplayer:Miss|h[Mcimbtyw]|h: 12'], f'same-realm chat line: {news(g)!r}')
+check(news(g) == [f"DING! {plink('Miss', 'Mcimbtyw')}: 12"], f'same-realm chat line: {news(g)!r}')
 check(banners(g) == ['DING! Mcimbtyw: 12'], f'same-realm banner: {g.banners[1]!r}')
 
 # a broken sender cannot break the link
 _, g, ns = fixed({'chat': True})
 receive(g, message('levelup', '31', 'Odd Name'), 'Od|d:-Other')
-check(news(g) == ['DING! |Hplayer:Odd-Other|h[Name]|h: 12'], f'sanitised link: {news(g)!r}')
+check(news(g) == [f"DING! {plink('Odd-Other', 'Name')}: 12"], f'sanitised link: {news(g)!r}')
 
 # chat off: no print, the banner as before
 _, g, ns = fixed({'chat': True})
@@ -137,12 +154,21 @@ check(banners(g) == ['DING! Lightchaser: 12'], f'chat off banner: {list(g.banner
 lua, g, ns = fixed({'chat': True, 'selfToast': True})
 lua.execute('NS.Deliver = function() end')   # nothing to send to here
 g.FireEvent('PLAYER_LEVEL_UP', 15)
-check(news(g) == ['DING! |Hplayer:Tester|h[Tester]|h: 15'], f'own news chat line: {news(g)!r}')
+check(news(g) == [f"DING! {plink('Tester', 'Tester')}: 15"], f'own news chat line: {news(g)!r}')
 check(banners(g) == ['DING! Tester: 15'], f'own news banner: {list(g.banners.values())!r}')
+
+# an unknown or missing class: the link falls back to the light tan, never the chat's default white
+for msg_id, cls in [('51', 'XYZ'), ('52', '')]:
+    _, g, ns = fixed({'chat': True})
+    receive(g, message('levelup', msg_id, 'Higgsbozon Lightchaser', cls=cls), 'Higgsbozon-Other')
+    expected = f"DING! {plink('Higgsbozon-Other', 'Lightchaser', None)}: 12"
+    check(colour(None) == '|cffe5cc99', f'fallback colour is {colour(None)!r}')
+    check(news(g) == [expected], f'class {cls!r} chat line: {news(g)!r}, expected {expected!r}')
+    check(banners(g) == ['DING! Lightchaser: 12'], f'class {cls!r} banner: {list(g.banners.values())!r}')
 
 if failures:
     print('FAIL:')
     for failure in failures:
         print('  ' + failure)
     sys.exit(1)
-print('PASS: [Kodo Times] chat lines link the name to the sender (realm kept cross-realm), banners and killer suffix unchanged')
+print('PASS: [Kodo Times] chat lines link the name to the sender in its class colour (tan fallback, realm kept cross-realm), banners and killer suffix unchanged')

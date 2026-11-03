@@ -51,6 +51,14 @@ C.goldBright, C.goldDim, C.cream, C.xp, C.grey = C.gold, C.gold, C.text, C.viole
 
 function ns.Hex(c) return format("|cff%02x%02x%02x", c[1] * 255, c[2] * 255, c[3] * 255) end
 
+-- class colour r, g, b (light tan when the class is unknown); ClassHex gives the "|cffRRGGBB" to close with "|r"
+function ns.ClassColor(class)
+    local c = class and RAID_CLASS_COLORS and RAID_CLASS_COLORS[class]
+    if c then return c.r, c.g, c.b end
+    return 0.9, 0.8, 0.6
+end
+function ns.ClassHex(class) return ns.Hex({ ns.ClassColor(class) }) end
+
 ---------------------------------------------------------------------------
 -- Widget helpers
 ---------------------------------------------------------------------------

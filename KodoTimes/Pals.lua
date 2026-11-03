@@ -82,17 +82,17 @@ local function MyName()
 end
 ns.MyName = MyName
 
--- a chat player link: left-click whispers target, right-click opens the usual menu
-local function PlayerLink(target, label)
+-- a chat player link in the class colour: left-click whispers target, right-click opens the usual menu
+local function PlayerLink(target, label, class)
     target = target and tostring(target):gsub("[|:]", "") or ""
-    if target == "" then return label end
-    return format("|Hplayer:%s|h[%s]|h", target, label)
+    if target == "" then return ns.ClassHex(class) .. label .. "|r" end
+    return ns.ClassHex(class) .. format("|Hplayer:%s|h[%s]|h", target, label) .. "|r"
 end
 
 -- forChat: the name becomes a player link to f.sender (the banner keeps the plain name)
 local function Fill(line, f, forChat)
     return (line:gsub("%%(%a)", function(k)
-        if k == "n" then return forChat and PlayerLink(f.sender, Nick(f.name)) or Nick(f.name)
+        if k == "n" then return forChat and PlayerLink(f.sender, Nick(f.name), f.class) or Nick(f.name)
         elseif k == "l" then return tostring(f.level or "?")
         elseif k == "z" then return f.zone or "?"
         elseif k == "s" then return f.skill or "?"

@@ -172,6 +172,8 @@ TUDNIVALÓK
         ÜDV A KODÓKERESŐK KÖZÖTT!, új leírással. A cím és a leírás kisebb betűvel jelenik meg, ha nem férne ki a sávba.
 0.9.38: a szintlépés-beszólások harmadik személyben szólnak (a haverok róla olvasnak, nem hozzájuk beszél), plusz
         11 új szintlépés-sor; a 10., 20. és 50. szint saját sora is átírva. Az új sorokat csak az látja, akinél már a 0.9.38 fut.
+0.9.39: a chatbe írt [Pals] hírekben a kattintható név a karakter kasztszínében jelenik meg (ismeretlen kasztnál
+        világos homokszínben), így elválik a szövegtől. A felugró ablak szövege nem változott.
 0.10.0: az addon új neve Kodo Times: a mappa KodoTimes, a parancs /kodo (a /mpal és a /pals is marad), a chatben
         [Kodo Times] a hírek előtt, a beállításokban Kiegészítők > Kodo Times. A régi beállítások egyszer átjönnek
         (a ZIP-ben lévő kis MotevePals híd tölti be őket), a régi és az új verziót használók továbbra is látják egymást.
