@@ -130,7 +130,7 @@ A csomag a fenti aktuális verzió forrásából készül. Feltöltés előtt a 
 
 ## Hibajelentés és források
 
-Hibát az [Issues oldalon](https://github.com/zolesz05/PalsAddon/issues) jelezhetsz. Add meg a kliens és az addon verzióját, a reprodukálás lépéseit és az érintett hír- vagy térképfunkciót. Kapcsolati hibánál a `/kodo diag` kimenete segíthet.
+Hibát az [Issues oldalon](https://github.com/zolesz05/Kodo-Times/issues) jelezhetsz. Add meg a kliens és az addon verzióját, a reprodukálás lépéseit és az érintett hír- vagy térképfunkciót. Kapcsolati hibánál a `/kodo diag` kimenete segíthet.
 
 A teljes addon a [KodoTimes](KodoTimes/) mappában, a régi beállításokat átadó híd a [MotevePals](MotevePals/) mappában található. A [részletes leírás és változásnapló](KodoTimes/README.txt) a korábbi változásokat is felsorolja. A Marcellus és Barlow betűtípusok SIL Open Font License fájljai a `KodoTimes/Fonts/` mappában szerepelnek.
 
