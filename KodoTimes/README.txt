@@ -1,4 +1,4 @@
-Kodo Times 0.10.3 - WoW Forever (Interface 16001)
+Kodo Times 0.10.4 - WoW Forever (Interface 16001)
 Vicces felugró hírek a haverokról. Mindenkinek fel kell raknia, aki látni / küldeni akar.
 
 TELEPÍTÉS
@@ -179,3 +179,5 @@ TUDNIVALÓK
 0.10.3: a ZIP-ben már csak a KodoTimes mappa van, a MotevePals híd megszűnt: telepítéskor egy mappát kell bemásolni.
         A 0.9.x-es beállítások már nem jönnek át (a Kodo Times alapértékekkel indul). A régi MotevePals mappát
         töröld: ha a régi, teljes addon is fut mellette, a Kodo Times csendben marad, és erre figyelmeztet.
+0.10.4: új telepítésnél vagy visszaállított beállításoknál a felugró hír alapmérete 0,9x (eddig 0,8x). A hely nem
+        változik; akinél már van mentett méret (a korábbi 0,8x és 0,67x is), annál az marad.

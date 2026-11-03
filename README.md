@@ -2,7 +2,7 @@
 
 **Kodo Times** (korábbi nevén Moteve Pals) egy közösségi World of Warcraft addon a WoW Forever klienshez. Vicces, díszes felugró híreket mutat a haverok szintlépéseiről, halálairól, szakma-mérföldköveiről és értékes tárgyairól, valamint megjeleníti az addont használó társakat a világtérképen.
 
-**Aktuális verzió: 0.10.3**
+**Aktuális verzió: 0.10.4**
 
 [Legfrissebb addon letöltése (ZIP)](https://github.com/zolesz05/Kodo-Times/raw/main/downloads/KodoTimes.zip)
 
@@ -57,7 +57,7 @@ Az értesítések díszes fantasy keretet, hírtípusonként saját hátteret, b
 
 - A felugró hír az **X** gombbal bezárható.
 - Jobb kattintás vagy Shift + X a sorban várakozó híreket is eldobja.
-- Alapból a képernyő bal szélén, a chat fölött jelenik meg, kisebb (0,8×) méretben.
+- Alapból a képernyő bal szélén, a chat fölött jelenik meg, kisebb (0,9×) méretben.
 - A `/kodo move` paranccsal mozgatható, és közben a jobb alsó sarkánál fogva vagy egérgörgővel arányosan átméretezhető (0,5–2×; jobb kattintás a sarokra = 1,0× méret); újra kiadva vagy a beállítások bezárásával befejezhető a mozgatás. A méret és a hely mentődik.
 - A láthatósági idő **1–60 másodperc** között állítható, például `/kodo time 8`.
 - A játék saját hangeffektjei, a chatbe kiírás és a saját hírek megjelenítése külön kapcsolhatók.
