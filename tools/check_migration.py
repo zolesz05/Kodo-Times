@@ -78,7 +78,7 @@ def to_lua(lua, v):
 
 # TOC fields: the renamed addon, and the stub that only declares the old saved variables
 fields, addon_files = toc(ADDON)
-for key, want in [('Title', '|cff7fd8ffKodo|r |cffa88bffTimes|r'), ('Version', '0.10.1'), ('Interface', '16001'),
+for key, want in [('Title', '|cff7fd8ffKodo|r |cffa88bffTimes|r'), ('Version', '0.10.2'), ('Interface', '16001'),
                   ('SavedVariables', 'KodoTimesDB'), ('SavedVariablesPerCharacter', 'KodoTimesChar'),
                   ('OptionalDeps', 'MotevePals')]:
     check(fields.get(key) == want, f'KodoTimes.toc {key} is {fields.get(key)!r}, expected {want!r}')

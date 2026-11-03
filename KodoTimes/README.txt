@@ -23,7 +23,7 @@ FRISSÍTÉS A RÉGI VERZIÓRÓL (MotevePals 0.9.x -> KodoTimes 0.10.0)
 HOGY NÉZ KI
   Díszes WoW-szalag hírtípusonként saját háttérrel (zászló, táj, medál): balra a szereplő
   class-portréja aranygyűrűben (halálnál vöröses-szürke; craftnál/lootnál az item ikonja),
-  középen "AZEROTH BULVÁR - RENDKÍVÜLI KIADÁS", a színes címsor és a beszólás, jobbra a
+  középen "KODO TIMES - RENDKÍVÜLI KIADÁS", a színes címsor és a beszólás, jobbra a
   lüktető medál (szint, RIP, skillpont, KÉK, EPIC, LOOT). Felülről esik be, kb. 6,5 mp-ig látszik.
   A hátterek a Textures\toast_*.tga fájlok (a megadott terv alapján).
 
@@ -181,3 +181,4 @@ TUDNIVALÓK
         az Ő már nem üres négyzet. Ha a régi, teljes addon is fut mellette, a Kodo Times csendben marad és szól.
 0.10.1: új telepítésnél a felugró hír alapmérete 0,8x (eddig 0,67x), így a szövege jobban olvasható. A hely nem
         változik; akinél már van mentett méret (a korábbi 0,67x is), annál az marad.
+0.10.2: a felugró hír felső, kis arany sora a régi név helyett már "KODO TIMES - RENDKÍVÜLI KIADÁS".
