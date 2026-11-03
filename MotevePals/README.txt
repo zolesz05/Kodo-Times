@@ -1,4 +1,4 @@
-Moteve Pals 0.9.36 - WoW Forever (Interface 16001)
+Moteve Pals 0.9.37 - WoW Forever (Interface 16001)
 Vicces felugró hírek a haverokról. Mindenkinek fel kell raknia, aki látni / küldeni akar.
 
 TELEPÍTÉS
@@ -153,3 +153,5 @@ TUDNIVALÓK
         a végükön pedig felhangosodtak. Ha a Párbeszéd és a Környezet csatorna sem használható, az addon hangja a
         Masteren szól, teljes hangerőn (mint 100%-nál). A kölcsönvett csatorna hangereje most pontosan addig marad
         átállítva, amíg az addon hangja szól (halál kb. 2 mp, szintlépés kb. 5 mp, a többi kb. 9 mp), nem fix 4 mp-ig.
+0.9.37: az első indításkor (és /mpal welcome-ra) felugró ablak a guildhez igazítva: DUDE, WHERE IS MY KODO? /
+        ÜDV A KODÓKERESŐK KÖZÖTT!, új leírással. A cím és a leírás kisebb betűvel jelenik meg, ha nem férne ki a sávba.

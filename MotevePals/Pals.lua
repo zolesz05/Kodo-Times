@@ -541,19 +541,27 @@ function ns.Welcome()
     ns.SetFontSafe(k, ns.FONT_BODY_BOLD, 8)
     k:SetTextColor(0.80, 0.62, 0.38); k:SetShadowColor(0, 0, 0, 1); k:SetShadowOffset(1, -1)
     k:SetPoint("TOPLEFT", W, "TOPLEFT", TW * 0.308, -14)
-    k:SetText("AZEROTH BULVÁR  -  ELSŐ INDÍTÁS")
+    k:SetText("DUDE, WHERE IS MY KODO?")
     local t = W:CreateFontString(nil, "OVERLAY")
     ns.SetFontSafe(t, MORPHEUS, 19)
     t:SetTextColor(1, 0.78, 0.25); t:SetShadowColor(0, 0, 0, 1); t:SetShadowOffset(1, -1)
     t:SetPoint("TOPLEFT", k, "BOTTOMLEFT", 0, -3)
-    t:SetText("ÜDV A FASZOS KLÁNBAN!")
+    t:SetText("ÜDV A KODÓKERESŐK KÖZÖTT!")
+    -- shrink the title into the text column (clear of the GO medallion); measured before any width is set
+    local TextW = t.GetUnboundedStringWidth or t.GetStringWidth
+    for _, size in ipairs({ 17, 16, 15 }) do
+        if (TextW(t) or 0) <= TW * 0.51 then break end
+        ns.SetFontSafe(t, MORPHEUS, size)
+    end
+    t:SetWidth(TW * 0.51); t:SetWordWrap(false)
     local x = W:CreateFontString(nil, "OVERLAY")
     ns.SetFontSafe(x, ns.FONT_TITLE, 11)
     x:SetTextColor(0.96, 0.93, 0.86); x:SetShadowColor(0, 0, 0, 1); x:SetShadowOffset(1, -1)
     x:SetJustifyH("LEFT"); x:SetJustifyV("TOP"); x:SetWidth(TW * 0.51); x:SetWordWrap(true)
     x:SetPoint("TOPLEFT", t, "BOTTOMLEFT", 0, -3)
-    x:SetText("Nyomj egy Let's go-t, és szólunk, ha a többi fogyatékossal történik valami nagyon fontos.")
+    x:SetText("Nyomj egy Let's go-t, és szólunk, ha valaki végre megtalálta a kodót, vagy ha a többiekkel valami nagyon fontos történik.")
     if (x:GetStringHeight() or 0) > 30 then ns.SetFontSafe(x, ns.FONT_TITLE, 10) end
+    if (x:GetStringHeight() or 0) > 38 then ns.SetFontSafe(x, ns.FONT_TITLE, 9) end
     local med = W:CreateFontString(nil, "OVERLAY")
     ns.SetFontSafe(med, MORPHEUS, 19)
     med:SetPoint("CENTER", W, "LEFT", TW * MED_X, 0)
