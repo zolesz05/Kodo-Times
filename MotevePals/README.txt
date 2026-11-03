@@ -1,4 +1,4 @@
-Moteve Pals 0.9.33 - WoW Forever (Interface 16001)
+Moteve Pals 0.9.34 - WoW Forever (Interface 16001)
 Vicces felugró hírek a haverokról. Mindenkinek fel kell raknia, aki látni / küldeni akar.
 
 TELEPÍTÉS
@@ -139,7 +139,8 @@ TUDNIVALÓK
         saját sort is kapott, ami csak azon a szinten jöhet ki. Az új sorokat csak az látja, akinél már a 0.9.31 fut.
 0.9.32: szintlépés-hír (a haveroknak és a saját értesítő is) csak 5 szintenként (5, 10, 15 ... 55) és 60-nál megy ki;
         a többi szintnél nincs hír. A régebbi verziójú haverok szintlépései továbbra is minden szintnél megjelennek.
-0.9.33: hangerő az addon saját hangjainak (Beállítások > Hírek > Hangerő csúszka, vagy /mpal volume <0-100>), mentve.
+0.9.33: 12 új halál-beszólás.
+0.9.34: hangerő az addon saját hangjainak (Beállítások > Hírek > Hangerő csúszka, vagy /mpal volume <0-100>), mentve.
         0% = néma, 100% = olyan hangos, mint eddig; a játék többi hangja és a Master hangerő nem változik.
         A WoW-os hangnak nincs hangerő-paramétere, ezért 1-99%-nál a hang egy ritkán használt csatornán szól
         (Párbeszéd, ha az ki van kapcsolva: Környezet, végül Effektek), aminek a hangerejét kb. 4 mp-re átállítja,
