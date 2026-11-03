@@ -2,7 +2,7 @@
 
 **Moteve Pals** egy közösségi World of Warcraft addon a WoW Forever klienshez. Vicces, díszes felugró híreket mutat a haverok szintlépéseiről, halálairól, szakma-mérföldköveiről és értékes tárgyairól, valamint megjeleníti az addont használó társakat a világtérképen.
 
-**Aktuális verzió: 0.9.33**
+**Aktuális verzió: 0.9.34**
 
 [Legfrissebb addon letöltése (ZIP)](downloads/MotevePals.zip?raw=true)
 
@@ -50,6 +50,7 @@ Az értesítések díszes fantasy keretet, hírtípusonként saját hátteret, b
 - A `/mpal move` paranccsal mozgatható, és közben a jobb alsó sarkánál fogva vagy egérgörgővel arányosan átméretezhető (0,5–2×; jobb kattintás a sarokra = 1,0× méret); újra kiadva vagy a beállítások bezárásával befejezhető a mozgatás. A méret és a hely mentődik.
 - A láthatósági idő **1–60 másodperc** között állítható, például `/mpal time 8`.
 - A játék saját hangeffektjei, a chatbe kiírás és a saját hírek megjelenítése külön kapcsolhatók.
+- Az addon saját hangjainak hangereje **0–100%** között állítható (a beállítópanelen vagy például `/mpal volume 50`); 0% néma, 100% az eddigi hangerő, a játék többi hangja nem változik.
 
 ## Haverok elérése
 
@@ -83,6 +84,7 @@ A beállítópanel a **Beállítások → Kiegészítők → Moteve Pals** oldal
 | `/mpal move` | Felugró ablak mozgatása és méretezése (sarok / görgő) |
 | `/mpal time 8` | Megjelenítési idő: 8 másodperc |
 | `/mpal sound` | Hang kapcsolása |
+| `/mpal volume 50` / `/mpal hangero 50` | Az addon hangjainak hangereje: 50% |
 | `/mpal chat` | Chatbe kiírás kapcsolása |
 | `/mpal self` | Saját hírek megjelenítésének kapcsolása |
 | `/mpal guild` / `/mpal group` / `/mpal friends` | Küldés kapcsolása az adott kapcsolatok felé |
@@ -122,6 +124,12 @@ A repository gyökeréből:
 
 ```sh
 python tools/package_addon.py
+```
+
+Az addon hangerő-kezelését (mentés, 0/100%, a kölcsönvett hangcsatorna visszaállítása, `/mpal volume`, beállítópanel) Lua 5.1-ben, a WoW API csonkjaival futtatva ellenőrzi:
+
+```sh
+uv run --with lupa python tools/check_volume.py
 ```
 
 A csomagoló ellenőrzi a TOC bejegyzéseit és a ZIP tartalmát, lecseréli a `downloads/MotevePals.zip` fájlt, és eltávolítja a korábbi verziószámos addoncsomagokat ebből a mappából. A forrást, a ZIP-et és a README-t együtt kell feltölteni.

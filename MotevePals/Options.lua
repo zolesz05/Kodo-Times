@@ -7,7 +7,7 @@ local OPTIONS = {
     { key = "enabled",      text = "Moteve Pals bekapcsolva",              tip = "Ha ki van kapcsolva, nem küld és nem mutat semmit." },
     { key = "selfToast",    text = "A saját híreim nálam is ugorjanak fel", tip = "Alapból csak a haverok látják, ami veled történik." },
     { key = "chat",         text = "Hírek a chatbe is",                     tip = "A felugró hír szövege a chatablakba is bekerül." },
-    { key = "sound",        text = "Hang a felugró híreknél",               tip = "WoW-os hang: halálnál raid warning, szintlépésnél level up." },
+    { key = "sound",        text = "Hang a felugró híreknél",               tip = "WoW-os hang: halálnál raid warning, szintlépésnél level up.\nAlatta a hangerő: csak az addon saját hangjaié.", below = 30 },
     { key = "quietRaidPvp", text = "Raidben, BG-n, arénában ne küldjön hírt", tip = "Dungeonban továbbra is megy." },
     { head = "Kinek menjen" },
     { key = "guild",        text = "Guild",                                 tip = "A guildtagok közül azok kapják, akiknél fut az addon." },
@@ -36,14 +36,7 @@ local function GetDef(name)
     if GetCVarDefault then local ok, v = pcall(GetCVarDefault, name); if ok and v then return v end end
     return nil
 end
-local function GetCV(name)
-    if C_CVar and C_CVar.GetCVar then local ok, v = pcall(C_CVar.GetCVar, name); if ok then return v end end
-    if GetCVar then local ok, v = pcall(GetCVar, name); if ok then return v end end
-end
-local function SetCV(name, value)
-    if C_CVar and C_CVar.SetCVar then return pcall(C_CVar.SetCVar, name, value) end
-    if SetCVar then return pcall(SetCVar, name, value) end
-end
+local GetCV, SetCV = ns.GetCV, ns.SetCV   -- from Pals.lua
 -- remember the values from before the first switch-on (fallback when the client has no default lookup)
 local function RememberPrev(id)
     local db = ns.DB()
@@ -84,6 +77,7 @@ sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
 sub:SetText("Vicces hírek a haverokról, és ki hol van a térképen. Parancsok: /mpal")
 
 local checks = {}
+local volumeAnchor, UpdateVolumeState   -- the sound checkbox (the volume row hangs under it), set below
 -- two columns so everything fits without scrolling
 local COLX = { 16, 340 }
 local colY = { -60, -60 }
@@ -117,6 +111,7 @@ for _, o in ipairs(OPTIONS) do
             if not db then return end
             db[self.opt.key] = self:GetChecked() and true or false
             if self.opt.preset then ns.ApplyPreset(self.opt.preset, db[self.opt.key]) end
+            if self.opt.key == "sound" then UpdateVolumeState() end
             if self.opt.key == "map" or self.opt.refreshMap then
                 if ns.RefreshMap then pcall(ns.RefreshMap) end
             end
@@ -130,6 +125,7 @@ for _, o in ipairs(OPTIONS) do
         cb:SetScript("OnLeave", function() ns.Tooltip:Hide() end)
         checks[#checks + 1] = cb
         y = y - 26
+        if o.below then volumeAnchor = cb; y = y - o.below end   -- room for the row under it
         colY[col] = y
     end
 end
@@ -169,6 +165,71 @@ plus:SetScript("OnClick", function()
     db.time = math.min(30, (tonumber(db.time) or 6.5) + 0.5)
     timeValue:SetText(format("%.1f mp", db.time))
 end)
+
+-- the addon's own sound volume, under the sound checkbox: Hangerő [slider] 80%  (or - 80% + without the template)
+local volWidgets, volSlider, refreshing, lastPreview = {}, nil, false, nil
+local volLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+ns.SetFontSafe(volLabel, ns.FONT_BODY, 12)
+volLabel:SetPoint("TOPLEFT", volumeAnchor, "BOTTOMLEFT", 30, -8)
+volLabel:SetText("Hangerő")
+local volValue = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+ns.SetFontSafe(volValue, ns.FONT_BODY, 12)
+local function SetVolume(v)
+    local db = ns.DB(); if not db then return end
+    db.volume = math.max(0, math.min(100, math.floor(v + 0.5)))
+    volValue:SetText(ns.Volume() .. "%")
+    -- a short sample, at most ~3 a second while dragging, only when sound is on
+    if db.sound and ns.PlayKind and (not lastPreview or GetTime() - lastPreview >= 0.3) then
+        lastPreview = GetTime()
+        ns.PlayKind("welcome")
+    end
+end
+local okSlider, slider = pcall(CreateFrame, "Slider", "MotevePalsVolumeSlider", panel, "OptionsSliderTemplate")
+if okSlider and slider then
+    volSlider = slider
+    slider:SetWidth(150)
+    slider:SetPoint("LEFT", volLabel, "RIGHT", 12, 0)
+    slider:SetMinMaxValues(0, 100)
+    slider:SetValueStep(5)
+    if slider.SetObeyStepOnDrag then slider:SetObeyStepOnDrag(true) end
+    for _, part in ipairs({ "Low", "High", "Text" }) do   -- the template's own texts: we have ours
+        local fs = rawget(slider, part) or _G["MotevePalsVolumeSlider" .. part]
+        if fs and fs.SetText then fs:SetText("") end
+    end
+    slider:SetScript("OnValueChanged", function(_, value)
+        if refreshing then return end   -- Refresh setting it: no write, no sample
+        local v = math.floor(value / 5 + 0.5) * 5
+        if ns.Volume() ~= v then SetVolume(v) end
+    end)
+    volValue:SetPoint("LEFT", slider, "RIGHT", 10, 0)
+    volWidgets = { volLabel, slider, volValue }
+else
+    local function VolBtn(txt, delta)
+        local b = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+        b:SetSize(26, 22)
+        b:SetText(txt)
+        ns.SetFontSafe(b:GetFontString(), ns.FONT_BODY, 12)
+        b:SetScript("OnClick", function() SetVolume(ns.Volume() + delta) end)
+        return b
+    end
+    local vMinus, vPlus = VolBtn("-", -10), VolBtn("+", 10)
+    vMinus:SetPoint("LEFT", volLabel, "RIGHT", 12, 0)
+    volValue:SetPoint("LEFT", vMinus, "RIGHT", 8, 0)
+    volValue:SetWidth(40)
+    vPlus:SetPoint("LEFT", volValue, "RIGHT", 8, 0)
+    volWidgets = { volLabel, vMinus, volValue, vPlus }
+end
+volValue:SetText("100%")
+-- dimmed and disabled while the sound is off
+function UpdateVolumeState()
+    local db = ns.DB()
+    local on = db and db.sound and true or false
+    for _, w in ipairs(volWidgets) do
+        w:SetAlpha(on and 1 or 0.4)
+        if w.Enable and w.Disable then if on then w:Enable() else w:Disable() end end
+    end
+end
+
 y = math.min(colY[1], colY[2] - 44) - 14
 
 -- handy buttons
@@ -193,6 +254,11 @@ local function Refresh()
     if not db then return end
     for _, cb in ipairs(checks) do cb:SetChecked(db[cb.opt.key] and true or false) end
     timeValue:SetText(format("%.1f mp", tonumber(db.time) or 6.5))
+    refreshing = true
+    if volSlider then volSlider:SetValue(ns.Volume()) end
+    refreshing = false
+    volValue:SetText(ns.Volume() .. "%")
+    UpdateVolumeState()
 end
 panel:SetScript("OnShow", Refresh)
 panel:SetScript("OnHide", function() if ns.SetMoveMode then ns.SetMoveMode(false) end end)   -- closing the settings ends move mode

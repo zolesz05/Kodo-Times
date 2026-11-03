@@ -10,7 +10,7 @@ local format, floor, random = string.format, math.floor, math.random
 
 local PREFIX = "MOTEVEPAL"
 local DEFAULTS = {
-    enabled = true, mapNames = false, quietRaidPvp = true, selfToast = false, chat = true, sound = true, time = 6.5, share = true, map = true,
+    enabled = true, mapNames = false, quietRaidPvp = true, selfToast = false, chat = true, sound = true, volume = 100, time = 6.5, share = true, map = true,
     guild = true, group = true, friends = true, crew = nil,
     point = "LEFT", relPoint = "LEFT", x = 18, y = -46, scale = 0.67,   -- left edge, above the chat
 }
@@ -161,12 +161,76 @@ local SOUND = {   -- one simple sound each
     epicloot    = { { K("IG_QUEST_LIST_COMPLETE", 878), 0 } },
 }
 SOUND.deathlegend = SOUND.death
+
+-- CVar access that never errors (missing API or CVar = nil); Options.lua uses these too
+function ns.GetCV(name)
+    if C_CVar and C_CVar.GetCVar then local ok, v = pcall(C_CVar.GetCVar, name); if ok then return v end end
+    if GetCVar then local ok, v = pcall(GetCVar, name); if ok then return v end end
+end
+function ns.SetCV(name, value)
+    if C_CVar and C_CVar.SetCVar then return pcall(C_CVar.SetCVar, name, value) end
+    if SetCVar then return pcall(SetCVar, name, value) end
+end
+
+-- the addon's own sound volume: a whole percent 0..100 (100 = as loud as the game plays it)
+function ns.Volume()
+    local n = tonumber(db and db.volume)
+    if not n or n ~= n then return 100 end
+    return math.max(0, math.min(100, floor(n + 0.5)))
+end
+
+-- PlaySound has no volume, so at 1-99% the sound plays on a little-used channel whose volume CVar is
+-- set to volume/100 for a moment (= Master x volume), then put back. Master itself is never touched.
+local CHANNELS = {   -- least noticeable first
+    { name = "Dialog",   cvar = "Sound_DialogVolume",   enable = "Sound_EnableDialog" },
+    { name = "Ambience", cvar = "Sound_AmbienceVolume", enable = "Sound_EnableAmbience" },
+    { name = "SFX",      cvar = "Sound_SFXVolume",      enable = "Sound_EnableSFX" },
+}
+local BORROW_HOLD = 4   -- s, longer than LEVELUP / RAID_WARNING: the volume also changes sounds already playing
+local borrowed, borrowOrig, borrowGen = nil, nil, 0   -- session only: the channel, the user's value, newest play
+local badChannel = {}   -- PlaySound errored on it: not tried again this session
+local function RestoreChannel()
+    if borrowed and borrowOrig ~= nil then ns.SetCV(borrowed.cvar, borrowOrig) end
+    borrowed, borrowOrig = nil, nil
+end
+local function Usable(ch)
+    return not badChannel[ch.name] and ns.GetCV(ch.cvar) ~= nil and tostring(ns.GetCV(ch.enable)) == "1"
+end
+local function TryChannel(ch, id, level)
+    -- the user's value is saved once; overlapping plays reuse the channel and only push the restore later
+    if not borrowed then borrowed, borrowOrig = ch, ns.GetCV(ch.cvar) end
+    ns.SetCV(ch.cvar, level)
+    local ok, willPlay = pcall(PlaySound, id, ch.name)
+    if ok and willPlay ~= false then
+        borrowGen = borrowGen + 1
+        local gen = borrowGen
+        C_Timer.After(BORROW_HOLD, function() if gen == borrowGen then RestoreChannel() end end)
+        return true
+    end
+    if not ok then badChannel[ch.name] = true end
+    RestoreChannel()
+    return false
+end
+local function PlayOne(id)
+    local v = ns.Volume()
+    if v <= 0 then return end
+    if v < 100 then
+        local level = format("%.2f", v / 100)
+        local tried = borrowed
+        if borrowed and TryChannel(borrowed, id, level) then return end
+        for _, ch in ipairs(CHANNELS) do
+            if ch ~= tried and Usable(ch) and TryChannel(ch, id, level) then return end
+        end
+    end
+    pcall(PlaySound, id, "Master")   -- 100%, or no channel to borrow: as loud as before
+end
+
 function ns.PlayKind(kind)
     local list = SOUND[kind]
     if not list or not PlaySound then return end
     for _, e in ipairs(list) do
-        if e[2] > 0 then C_Timer.After(e[2], function() pcall(PlaySound, e[1], "Master") end)
-        else pcall(PlaySound, e[1], "Master") end
+        if e[2] > 0 then C_Timer.After(e[2], function() PlayOne(e[1]) end)
+        else PlayOne(e[1]) end
     end
 end
 
@@ -849,10 +913,11 @@ end
 ---------------------------------------------------------------------------
 local ev = CreateFrame("Frame")
 for _, e in ipairs({ "ADDON_LOADED", "PLAYER_LOGIN", "PLAYER_LEVEL_UP", "PLAYER_DEAD", "SKILL_LINES_CHANGED",
-                     "CHAT_MSG_LOOT", "CHAT_MSG_ADDON" }) do
+                     "CHAT_MSG_LOOT", "CHAT_MSG_ADDON", "PLAYER_LOGOUT" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 ev:SetScript("OnEvent", function(_, e, a1, a2, a3, a4)
+    if e == "PLAYER_LOGOUT" then RestoreChannel(); return end   -- logout and /reload: give back a borrowed channel
     if e == "ADDON_LOADED" then
         if a1 ~= ADDON_NAME then return end
         MotevePalsDB = MotevePalsDB or {}
@@ -991,6 +1056,15 @@ SlashCmdList.MOTEVEPALS = function(input)
         local n = tonumber(arg)
         if n and n >= 1 and n <= 60 then db.time = n end
         Print(format("a hír %.1f mp-ig marad kint (+ elhalványulás). Állítás: /mpal time <1-60>", tonumber(db.time) or 6.5))
+    elseif cmd == "volume" or cmd == "hangero" or cmd == "hangerő" then
+        local n = tonumber(arg)
+        if n and n == n then
+            db.volume = math.max(0, math.min(100, floor(n + 0.5)))
+            Print(format("hangerő: %d%%", ns.Volume()) .. (db.sound and "" or "  (a hang most ki van kapcsolva: /mpal sound)"))
+            if db.sound then ns.PlayKind("welcome") end
+        else
+            Print(format("hangerő: %d%%  (az addon saját hangjai). Állítás: /mpal volume <0-100>", ns.Volume()))
+        end
     elseif cmd == "raidhir" or cmd == "raid" then
         db.quietRaidPvp = not db.quietRaidPvp
         Print("raidben / BG-n / arénában: " .. (db.quietRaidPvp and "nem küld hírt" or "ott is küld hírt"))
@@ -1049,15 +1123,16 @@ SlashCmdList.MOTEVEPALS = function(input)
     elseif cmd == "group" then db.group = not db.group; Print("csapatnak küldés: " .. OnOff(db.group))
     elseif cmd == "off" or cmd == "on" then db.enabled = (cmd == "on"); Print("Moteve Pals: " .. OnOff(db.enabled))
     else
-        Print(format("be: %s  ·  guild: %s  ·  csapat: %s  ·  barátok: %s  ·  crew: %s  ·  hang: %s",
+        Print(format("be: %s  ·  guild: %s  ·  csapat: %s  ·  barátok: %s  ·  crew: %s  ·  hang: %s  ·  hangerő: %d%%",
             OnOff(db.enabled), OnOff(db.guild), OnOff(db.group), OnOff(db.friends),
             db.crew and ((char.noCrew and db.crew .. " (ezen a karakteren kihagyva)") or
                 ((GetChannelName(db.crew) or 0) > 0 and db.crew .. " |cff7fff7f(bent vagy)|r" or db.crew .. " |cffff5544(NEM vagy bent)|r")) or "nincs",
-            OnOff(db.sound)))
+            OnOff(db.sound), ns.Volume()))
         print("   /mpal test            minta-hírek")
         print("   /mpal crew <név>      közös rejtett csatorna a haveroknak (mind ugyanazt írjátok be)")
         print("   /mpal move            a felugró ablak mozgatása, a sarkánál / görgővel méretezés")
         print("   /mpal time <mp>       meddig maradjon kint (most: " .. (db.time or 6.5) .. " mp)")
+        print("   /mpal volume <0-100>  az addon hangjainak hangereje (most: " .. ns.Volume() .. "%)")
         print("   bezárás: X a sarokban / bal klikk = ez,  jobb klikk = ez + a sorban állók")
         print("   /mpal legend <class> <név> <cím>   class-legenda halálhírekhez")
         print("   /mpal hol             ki hol van most")
