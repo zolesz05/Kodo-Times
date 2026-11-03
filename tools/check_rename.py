@@ -1,5 +1,7 @@
 """Check the rename to Kodo Times: no old visible or frame name is left, and the network names that must stay, stay.
 
+The news toast's top line (the kicker) must carry the Kodo Times masthead, not the old one.
+
 Scans every text file under KodoTimes/ and tools/. The only exceptions are this script and the older entries of the
 KodoTimes/README.txt changelog (history stays as written). Standard library only:  python tools/check_rename.py
 """
@@ -10,6 +12,7 @@ import sys
 root = Path(__file__).resolve().parents[1]
 OLD = 'Moteve' + 'Pals'   # built from pieces, so this script never holds the names it bans
 BANNED = ['Moteve' + ' Pals', 'MOTEVE' + ' PALS'] + [OLD + suffix for suffix in ('Toast', 'Options', 'Welcome', 'VolumeSlider', 'Tooltip')]
+BANNED += ['AZEROTH' + ' BULVÁR']   # the pre-rename masthead of the news toast's top line
 TEXT = {'.lua', '.toc', '.txt', '.py', '.md'}
 HISTORY = re.compile(r'^(\d+\.\d+(?:\.\d+)?):')
 failures = []
@@ -39,9 +42,15 @@ for kept in ('local PREFIX = "MOTEVEPAL"', 'local DEFAULT_CREW = "MPhaverok"', '
     if kept not in pals:
         failures.append(f'KodoTimes/Pals.lua lost {kept!r}')
 
+# every news toast shares the one kicker, set once: it must read the Kodo Times masthead
+kickers = re.findall(r'T\.kicker:SetText\((.*)\)', pals)
+if kickers != ['"KODO TIMES  -  RENDKÍVÜLI KIADÁS"']:
+    failures.append(f'KodoTimes/Pals.lua sets the toast kicker to {kickers}, expected one "KODO TIMES  -  RENDKÍVÜLI KIADÁS"')
+
 if failures:
     print('FAIL:')
     for failure in failures:
         print('  ' + failure)
     sys.exit(1)
-print('PASS: no old name left in KodoTimes/ or tools/ (changelog history aside); MOTEVEPAL prefix and MP crew channel kept')
+print('PASS: no old name left in KodoTimes/ or tools/ (changelog history aside); MOTEVEPAL prefix and MP crew channel kept; '
+      'toast kicker reads KODO TIMES')
