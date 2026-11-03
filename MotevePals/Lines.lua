@@ -19,14 +19,25 @@ ns.LINES = {
         "%n %l. szint. Hogy mi változott? Semmi. De legalább villogott.",
         "%n szintet lépett. A tükörképe szerint még mindig ugyanaz a balfasz, csak %l-es.",
         "%l. szint, %n! A közvetítést a 'Csak még egy quest' alapítvány támogatta.",
-        "Új szint, %n! A lelked értéke továbbra is nulla.",
-        "Gratulálunk, %n! Most már drágábban halsz meg.",
+        "Új szint! %n lelkének értéke továbbra is nulla.",
+        "Gratulálunk! %n most már drágábban hal meg.",
         "%n, a démonod büszke rád. Hazudik.",
-        "%n: új képességek feloldva. Józan ész továbbra sem elérhető.",
-        "LEVEL UP: %n jogosultságai frissültek.",
-        "%n egy szinttel közelebb a munkanélküliséghez.",
-        "%n, anyád is büszke lenne. Ha tudná, mivel töltöd az időd.",
-        "%n, már megint nem a való életben fejlődtél.",
+        "%n új képességeket oldott fel. Józan ész továbbra sem elérhető.",
+        "LEVEL UP: %n felhasználói jogosultságai frissültek.",
+        "%n egy szinttel közelebb került a munkanélküliséghez.",
+        "%n anyja büszke lenne. Ha tudná, mivel tölti az idejét.",
+        "%n már megint nem a való életben fejlődött.",
+        "%n fejlődése megállíthatatlan. A társadalmi leépülése szintén.",
+        "%n fejlődése már nem természetes folyamat. Ez szakmai segítséget igényel.",
+        "%n újabb mérföldkövet ért el a digitális önpusztításban.",
+        "%n karaktere fejlődik. A teste közben lassan feladja.",
+        "%n: Egyre magasabb szintű probléma.",
+        "%n: Új szint, változatlan szellemi kapacitás.",
+        "%n: A karakter fejlődése meghaladta a gazdájáét.",
+        "%n ismét magasabb szintre emelte a problémát.",
+        "%n tapasztaltabb lett, de bölcsebbnek továbbra sem neveznénk.",
+        "%n fejlődése olyan, mint a gazdaság: papíron lenyűgöző.",
+        "%n ma is közelebb került ahhoz, aki lenni szeretne. De még messze van.",
     },
     levelround = {
         "%n elérte a %l. szintet! Ez már nem hobbi, ez kórkép.",
@@ -121,10 +132,10 @@ ns.LINES = {
 ns.LINES_AT = {
     levelround = {
         [10] = {
-            "%n, már nem vagy teljesen kezdő. Csak majdnem.",
+            "%n már nem teljesen kezdő. Csak majdnem.",
         },
         [20] = {
-            "%n, a játék most kezd igazán drága lenni.",
+            "%n számára a játék most kezd igazán drága lenni.",
         },
         [30] = {
             "%n, félúton vagy. Legalábbis lélekben.",
@@ -133,7 +144,7 @@ ns.LINES_AT = {
             "Mount unlocked, %n. Pénztárca locked.",
         },
         [50] = {
-            "%n, már túl sok időt öltél bele ahhoz, hogy abbahagyd.",
+            "%n már túl sok időt ölt bele ahhoz, hogy abbahagyja.",
         },
     },
 }
