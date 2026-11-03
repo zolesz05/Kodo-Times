@@ -22,8 +22,14 @@ ADDON, STUB = root / 'KodoTimes', root / 'MotevePals'
 STUBS = next(node.value.value for node in ast.parse((root / 'tools' / 'check_volume.py').read_text(encoding='utf-8')).body
              if isinstance(node, ast.Assign) and getattr(node.targets[0], 'id', None) == 'STUBS')
 
-# addon messages are recorded; the toast's body text too
+# addon messages are recorded; the toast's body text and every frame's scale too
 EXTRA = r'''
+local createFrame = CreateFrame
+function CreateFrame(...)
+    local f = createFrame(...)
+    f.SetScale = function(self, s) self.__scale = s end
+    return f
+end
 registered, sent, banners, calls = {}, {}, {}, {}
 C_ChatInfo = {
     RegisterAddonMessagePrefix = function(p) registered[#registered + 1] = p; return true end,
@@ -72,7 +78,7 @@ def to_lua(lua, v):
 
 # TOC fields: the renamed addon, and the stub that only declares the old saved variables
 fields, addon_files = toc(ADDON)
-for key, want in [('Title', '|cff7fd8ffKodo|r |cffa88bffTimes|r'), ('Version', '0.10.0'), ('Interface', '16001'),
+for key, want in [('Title', '|cff7fd8ffKodo|r |cffa88bffTimes|r'), ('Version', '0.10.1'), ('Interface', '16001'),
                   ('SavedVariables', 'KodoTimesDB'), ('SavedVariablesPerCharacter', 'KodoTimesChar'),
                   ('OptionalDeps', 'MotevePals')]:
     check(fields.get(key) == want, f'KodoTimes.toc {key} is {fields.get(key)!r}, expected {want!r}')
@@ -167,12 +173,20 @@ lua, g, ns = fresh()
 defaults = to_py(lua.eval('(function() local d = {} for k, v in pairs(KodoTimesDB) do d[k] = v end return d end)()'))
 want = {'enabled': True, 'mapNames': False, 'quietRaidPvp': True, 'selfToast': False, 'chat': True, 'sound': True, 'volume': 100,
         'time': 6.5, 'share': True, 'map': True, 'guild': True, 'group': True, 'friends': True,
-        'point': 'LEFT', 'relPoint': 'LEFT', 'x': 18, 'y': -46, 'scale': 0.67, 'posVersion': 2}
+        'point': 'LEFT', 'relPoint': 'LEFT', 'x': 18, 'y': -46, 'scale': 0.8, 'posVersion': 2}
 check(defaults == want, f'fresh install: KodoTimesDB is {defaults}')
 check(to_py(g.KodoTimesChar) == {}, f'fresh install: KodoTimesChar is {to_py(g.KodoTimesChar)}')
 check(g.MotevePalsDB is None and g.MotevePalsChar is None, 'fresh install: old saved variables were created')
 login(g, 6.1)
 check(g.KodoTimesWelcome is not None, 'fresh install: no welcome window 6 s after login')
+
+# a saved scale is kept: an existing profile with the old 0.67 default stays at 0.67, only new installs get 0.8
+for saved in (0.67, 1.5):
+    lua, g, ns = fresh(new_db={'scale': saved, 'posVersion': 2})
+    check(g.KodoTimesDB.scale == saved, f'saved scale {saved}: KodoTimesDB.scale is {g.KodoTimesDB.scale}')
+    check(g.KodoTimesToast.__scale == saved, f'saved scale {saved}: the toast is drawn at {g.KodoTimesToast.__scale}')
+lua, g, ns = fresh()
+check(g.KodoTimesToast.__scale == 0.8, f'fresh install: the toast is drawn at {g.KodoTimesToast.__scale}, expected 0.8')
 
 # prefix and slash commands: MOTEVEPAL is registered, sent and received; /kodo, /mpal and /pals are KODOTIMES
 lua, g, ns = fresh(new_db={'chat': True})
@@ -216,4 +230,4 @@ if failures:
         print('  ' + failure)
     sys.exit(1)
 print('PASS: KodoTimes.toc and the MotevePals stub; old settings copied once (account and character apart), never written; '
-      'fresh install gets DEFAULTS and the welcome; MOTEVEPAL prefix kept; /kodo /mpal /pals; dormant next to the old addon')
+      'fresh install gets DEFAULTS (toast at 0.8) and the welcome; a saved scale (0.67) stays; MOTEVEPAL prefix kept; /kodo /mpal /pals; dormant next to the old addon')
