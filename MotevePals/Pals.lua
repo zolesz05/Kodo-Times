@@ -12,7 +12,7 @@ local PREFIX = "MOTEVEPAL"
 local DEFAULTS = {
     enabled = true, mapNames = false, quietRaidPvp = true, selfToast = false, chat = true, sound = true, time = 6.5, share = true, map = true,
     guild = true, group = true, friends = true, crew = nil,
-    point = "TOP", relPoint = "TOP", x = 0, y = -120, scale = 1,
+    point = "LEFT", relPoint = "LEFT", x = 18, y = -46, scale = 0.67,   -- left edge, above the chat
 }
 local db, char
 
@@ -849,6 +849,16 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3, a4)
         MotevePalsChar = MotevePalsChar or {}
         for k, v in pairs(DEFAULTS) do if MotevePalsDB[k] == nil then MotevePalsDB[k] = v end end
         db, char = MotevePalsDB, MotevePalsChar
+        -- before 0.9.30 the default was TOP/TOP/0/-120 at 1.0: a profile still holding it was never
+        -- moved or resized, so it moves to the new default once. posVersion is not in DEFAULTS on purpose.
+        -- (a profile from before 0.9.26 had no scale: the loop above just gave it DEFAULTS.scale)
+        if (db.posVersion or 1) < 2 then
+            if db.point == "TOP" and db.relPoint == "TOP" and math.abs(tonumber(db.x) or 0) < 0.5
+                and math.abs((tonumber(db.y) or 0) + 120) < 0.5 and (db.scale == 1 or db.scale == DEFAULTS.scale) then
+                for _, k in ipairs({ "point", "relPoint", "x", "y", "scale" }) do db[k] = DEFAULTS[k] end
+            end
+            db.posVersion = 2
+        end
         db.scale = ClampScale(db.scale)
         T:SetScale(db.scale)
         T:ClearAllPoints()
