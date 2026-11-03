@@ -180,18 +180,27 @@ function ns.Volume()
 end
 
 -- PlaySound has no volume, so at 1-99% the sound plays on a little-used channel whose volume CVar is
--- set to volume/100 for a moment (= Master x volume), then put back. Master itself is never touched.
-local CHANNELS = {   -- least noticeable first
+-- set to volume/100 for a moment (= Master x volume), then put back. Master itself is never touched,
+-- nor is Effects (SFX): it carries the game's loot, craft and skill-up sounds that play with our toasts.
+local CHANNELS = {   -- least noticeable first; none of them usable = Master at full volume
     { name = "Dialog",   cvar = "Sound_DialogVolume",   enable = "Sound_EnableDialog" },
     { name = "Ambience", cvar = "Sound_AmbienceVolume", enable = "Sound_EnableAmbience" },
-    { name = "SFX",      cvar = "Sound_SFXVolume",      enable = "Sound_EnableSFX" },
 }
-local BORROW_HOLD = 4   -- s, longer than LEVELUP / RAID_WARNING: the volume also changes sounds already playing
-local borrowed, borrowOrig, borrowGen = nil, nil, 0   -- session only: the channel, the user's value, newest play
+-- s the channel stays borrowed per sound id: the sound's length + 0.5 s, as the volume also changes
+-- the channel's other sounds. Lengths measured from the client's Ogg files (FileDataID).
+local HOLD = {
+    [878]  = 8.9,   -- IG_QUEST_LIST_COMPLETE (567439): 8.35 s
+    [888]  = 4.9,   -- LEVELUP (569593): 4.36 s
+    [8959] = 1.8,   -- RAID_WARNING (567397): 1.29 s
+    [847]  = 1.8,   -- IG_QUEST_FAILED (567459): 1.24 s
+}
+local HOLD_DEFAULT = 4   -- s, any other id
+local borrowed, borrowOrig, borrowGen = nil, nil, 0   -- session only: the channel, the user's value, newest timer
+local borrowUntil = 0   -- GetTime() when the longest sound on the borrowed channel has ended
 local badChannel = {}   -- PlaySound errored on it: not tried again this session
 local function RestoreChannel()
     if borrowed and borrowOrig ~= nil then ns.SetCV(borrowed.cvar, borrowOrig) end
-    borrowed, borrowOrig = nil, nil
+    borrowed, borrowOrig, borrowUntil = nil, nil, 0
 end
 local function Usable(ch)
     return not badChannel[ch.name] and ns.GetCV(ch.cvar) ~= nil and tostring(ns.GetCV(ch.enable)) == "1"
@@ -202,9 +211,13 @@ local function TryChannel(ch, id, level)
     ns.SetCV(ch.cvar, level)
     local ok, willPlay = pcall(PlaySound, id, ch.name)
     if ok and willPlay ~= false then
-        borrowGen = borrowGen + 1
-        local gen = borrowGen
-        C_Timer.After(BORROW_HOLD, function() if gen == borrowGen then RestoreChannel() end end)
+        local hold = HOLD[id] or HOLD_DEFAULT
+        if GetTime() + hold > borrowUntil then   -- a shorter sound inside a longer one keeps the longer timer
+            borrowUntil = GetTime() + hold
+            borrowGen = borrowGen + 1
+            local gen = borrowGen
+            C_Timer.After(hold, function() if gen == borrowGen then RestoreChannel() end end)
+        end
         return true
     end
     if not ok then badChannel[ch.name] = true end
