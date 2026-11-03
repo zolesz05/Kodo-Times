@@ -1,14 +1,13 @@
 """Publish only the latest installable addon ZIP at a permanent download path: downloads/KodoTimes.zip.
 
-The ZIP holds the addon (KodoTimes/) and the MotevePals/ bridge stub, which keeps the client loading the saved
-variables of the old name so KodoTimes can copy them once.
+The ZIP holds only the addon folder (KodoTimes/): installing means copying that one folder into Interface/AddOns.
 """
 from pathlib import Path
 import re
 import zipfile
 
 root = Path(__file__).resolve().parents[1]
-FOLDERS = [root / 'KodoTimes', root / 'MotevePals']
+FOLDERS = [root / 'KodoTimes']
 downloads = root / 'downloads'
 version = re.search(r'^## Version:\s*(\S+)', (root / 'KodoTimes' / 'KodoTimes.toc').read_text(encoding='utf-8'),
                     re.MULTILINE).group(1)
@@ -45,4 +44,4 @@ text = re.sub(r'\*\*Aktuális verzió: [^*]+\*\*', f'**Aktuális verzió: {versi
 # absolute link: the relative downloads/...?raw=true form gives 404 on GitHub
 text = re.sub(r'\]\([^)]*downloads/(?:MotevePals|KodoTimes)(?:-[0-9.]+)?\.zip(?:\?raw=true)?\)', '](' + DOWNLOAD_URL + ')', text)
 readme.write_text(text, encoding='utf-8')
-print(f'PASS: {version}; {len(files)} verified addon files; downloads/KodoTimes.zip is the only current addon download.')
+print(f'PASS: {version}; {len(files)} verified addon files in KodoTimes/ only; downloads/KodoTimes.zip is the only current addon download.')

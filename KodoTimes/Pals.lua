@@ -17,12 +17,12 @@ local DEFAULTS = {
     point = "LEFT", relPoint = "LEFT", x = 18, y = -46, scale = 0.8,    -- left edge, above the chat
 }
 local db, char
-local dormant   -- the full old addon (0.9.x, folder MotevePals) is running too: this copy stays silent
+local dormant   -- a leftover full old addon (0.9.x, folder MotevePals) is running too: this copy stays silent
 
 local function Print(msg) print("|cffa88bffKodo Times|r: " .. msg) end
 local function WarnDuplicate()
     Print("|cffff5544a régi verzió (MotevePals mappa) is fut, ezért ez most nem csinál semmit.|r "
-        .. "Csomagold ki a teljes KodoTimes.zip-et a régi fölé (felülírva), és indítsd újra a játékot.")
+        .. "Töröld a régi MotevePals mappát az Interface\\AddOns mappából, és indítsd újra a játékot.")
 end
 local secret = issecretvalue or function() return false end
 
@@ -952,13 +952,6 @@ end
 ---------------------------------------------------------------------------
 -- Events
 ---------------------------------------------------------------------------
-local function DeepCopy(v)
-    if type(v) ~= "table" then return v end
-    local t = {}
-    for k, x in pairs(v) do t[DeepCopy(k)] = DeepCopy(x) end
-    return t
-end
-
 local ev = CreateFrame("Frame")
 for _, e in ipairs({ "ADDON_LOADED", "PLAYER_LOGIN", "PLAYER_LEVEL_UP", "PLAYER_DEAD", "SKILL_LINES_CHANGED",
                      "CHAT_MSG_LOOT", "CHAT_MSG_ADDON", "PLAYER_LOGOUT" }) do
@@ -968,14 +961,11 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3, a4)
     if e == "PLAYER_LOGOUT" then RestoreChannel(); return end   -- logout and /reload: give back a borrowed channel
     if e == "ADDON_LOADED" then
         if a1 ~= ADDON_NAME then return end
-        -- only the full old addon defines this (it loads first: OptionalDeps). Two copies would show every
-        -- toast twice and answer twice on PREFIX, so this one stays dormant: db stays nil, nothing runs.
+        -- only a leftover full 0.9.x addon (folder MotevePals) defines this; it loads first only because of
+        -- OptionalDeps: MotevePals in the TOC. Two copies would show every toast twice and answer twice on
+        -- PREFIX, so this one stays dormant: db stays nil, nothing runs. Since 0.10.3 the 0.9.x saved
+        -- variables are not read at all: settings start fresh.
         if SlashCmdList.MOTEVEPALS then dormant = true; return end
-        -- updating from 0.9.x: the MotevePals stub keeps loading the old saved variables, and each table is
-        -- copied once, on its own (an alt logs in after the first character already made KodoTimesDB).
-        -- Deep copies, and the old tables are never written: going back to 0.9.x still finds them as they were.
-        if KodoTimesDB == nil and type(MotevePalsDB) == "table" then KodoTimesDB = DeepCopy(MotevePalsDB) end
-        if KodoTimesChar == nil and type(MotevePalsChar) == "table" then KodoTimesChar = DeepCopy(MotevePalsChar) end
         KodoTimesDB = KodoTimesDB or {}
         KodoTimesChar = KodoTimesChar or {}
         for k, v in pairs(DEFAULTS) do if KodoTimesDB[k] == nil then KodoTimesDB[k] = v end end

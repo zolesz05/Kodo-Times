@@ -1,23 +1,17 @@
-Kodo Times 0.10.0 - WoW Forever (Interface 16001)
+Kodo Times 0.10.3 - WoW Forever (Interface 16001)
 Vicces felugró hírek a haverokról. Mindenkinek fel kell raknia, aki látni / küldeni akar.
 
 TELEPÍTÉS
-  A ZIP mindkét mappáját ("KodoTimes" és "MotevePals") másold az Interface\AddOns mappába, majd indítsd újra a klienst.
+  A ZIP-ben egyetlen mappa van: a "KodoTimes" mappát másold az Interface\AddOns mappába, majd indítsd újra a klienst.
   Kipróbálás egyedül: /kodo test   (a régi /mpal és /pals parancs is működik)
 
-FRISSÍTÉS A RÉGI VERZIÓRÓL (MotevePals 0.9.x -> KodoTimes 0.10.0)
-  1. A teljes KodoTimes.zip-et csomagold ki a régi telepítés fölé (Interface\AddOns), felülírva a fájlokat.
-     A régi "MotevePals" mappát előtte NE töröld.
+FRISSÍTÉS A RÉGI VERZIÓRÓL (MotevePals 0.9.x -> KodoTimes)
+  1. Töröld a régi "MotevePals" mappát az Interface\AddOns mappából, és másold be helyette a "KodoTimes" mappát.
   2. Lépj ki teljesen a játékból és indítsd újra a klienst (a /reload nem elég).
-  3. Minden karakter az első belépésekor egyszer átveszi a régi beállításait (hangerő, a felugró ablak helye
-     és mérete, kapcsolók, crew, üdvözlőablak). Az új mentés: KodoTimesDB / KodoTimesChar; a régit
-     (MotevePalsDB / MotevePalsChar) az addon csak olvassa.
-  A "MotevePals" mappában ezután csak egy kis híd fut ("Kodo Times – régi beállítások"): semmit nem csinál,
-  csak betölti a régi mentést. A régi fájlok ott maradhatnak, már nem töltődnek be. Ajánlott megtartani;
-  akkor törölhető, ha az első belépés után már minden karaktereddel beléptél egyszer a 0.10.0-val
-  (különben a többi karakternél újra feljön az üdvözlőablak, és a crewból kilépett altok újra belépnek).
+  A régi beállítások nem jönnek át: a Kodo Times alapértékekkel indul (a felugró ablak helye, mérete, a hangerő,
+  a crew újra beállítandó), és minden karakternél egyszer feljön az üdvözlőablak.
   Ha a régi, teljes addon is fut mellette, a Kodo Times csendben marad és figyelmeztet a chatben
-  (különben minden hír kétszer jönne): csomagold ki a teljes ZIP-et a régi fölé, és indítsd újra a játékot.
+  (különben minden hír kétszer jönne): töröld a régi MotevePals mappát, és indítsd újra a játékot.
   A régi és az új verziót használó haverok továbbra is látják egymás híreit és helyét a térképen.
 
 HOGY NÉZ KI
@@ -182,3 +176,6 @@ TUDNIVALÓK
 0.10.1: új telepítésnél a felugró hír alapmérete 0,8x (eddig 0,67x), így a szövege jobban olvasható. A hely nem
         változik; akinél már van mentett méret (a korábbi 0,67x is), annál az marad.
 0.10.2: a felugró hír felső, kis arany sora a régi név helyett már "KODO TIMES - RENDKÍVÜLI KIADÁS".
+0.10.3: a ZIP-ben már csak a KodoTimes mappa van, a MotevePals híd megszűnt: telepítéskor egy mappát kell bemásolni.
+        A 0.9.x-es beállítások már nem jönnek át (a Kodo Times alapértékekkel indul). A régi MotevePals mappát
+        töröld: ha a régi, teljes addon is fut mellette, a Kodo Times csendben marad, és erre figyelmeztet.
