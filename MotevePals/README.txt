@@ -1,4 +1,4 @@
-Moteve Pals 0.9.38 - WoW Forever (Interface 16001)
+Moteve Pals 0.9.39 - WoW Forever (Interface 16001)
 Vicces felugró hírek a haverokról. Mindenkinek fel kell raknia, aki látni / küldeni akar.
 
 TELEPÍTÉS
@@ -157,3 +157,5 @@ TUDNIVALÓK
         ÜDV A KODÓKERESŐK KÖZÖTT!, új leírással. A cím és a leírás kisebb betűvel jelenik meg, ha nem férne ki a sávba.
 0.9.38: a szintlépés-beszólások harmadik személyben szólnak (a haverok róla olvasnak, nem hozzájuk beszél), plusz
         11 új szintlépés-sor; a 10., 20. és 50. szint saját sora is átírva. Az új sorokat csak az látja, akinél már a 0.9.38 fut.
+0.9.39: a chatbe írt [Pals] hírekben a kattintható név a karakter kasztszínében jelenik meg (ismeretlen kasztnál
+        világos homokszínben), így elválik a szövegtől. A felugró ablak szövege nem változott.
