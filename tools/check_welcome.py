@@ -26,10 +26,10 @@ glyph, unbounded = 0.6, true
 welcomeFS, welcomeButtons, joined, left = {}, {}, {}, {}
 local function Chars(s) return select(2, s:gsub("[^\128-\191]", "")) end
 local function FontString()
-    local fs = setmetatable({ text = "", log = {} }, { __index = function(_, key) if key:match("^%u") and not key:match("^Get") then return function() end end end })
+    local fs = setmetatable({ text = "", log = {}, paths = {} }, { __index = function(_, key) if key:match("^%u") and not key:match("^Get") then return function() end end end })
     local function Log(s) fs.log[#fs.log + 1] = s end
     local function Natural(self) return Chars(self.text) * self.size * glyph end
-    function fs:SetFont(path, size) self.font, self.size = path, size; Log("font " .. size) end
+    function fs:SetFont(path, size) self.font, self.size = path, size; self.paths[#self.paths + 1] = path; Log("font " .. size) end
     function fs:GetFont() return self.font, self.size end
     function fs:SetText(s) self.text = s end
     function fs:SetWidth(w) self.width = w; Log("width") end
@@ -56,9 +56,9 @@ end
 local BaseCreateFrame = CreateFrame
 function CreateFrame(kind, name, parent, ...)
     local f = BaseCreateFrame(kind, name, parent, ...)
-    if name == "MotevePalsWelcome" then
+    if name == "KodoTimesWelcome" then
         f.CreateFontString = function() local fs = FontString(); welcomeFS[#welcomeFS + 1] = fs; return fs end
-    elseif kind == "Button" and parent and parent == rawget(_G, "MotevePalsWelcome") then
+    elseif kind == "Button" and parent and parent == rawget(_G, "KodoTimesWelcome") then
         welcomeButtons[#welcomeButtons + 1] = f
     end
     return f
@@ -89,12 +89,12 @@ def fresh(saved=None, char=None, glyph=0.6, unbounded=True):
     g = lua.globals()
     g.glyph, g.unbounded = glyph, unbounded
     if saved is not None:
-        g.MotevePalsDB = lua.table_from(saved)
+        g.KodoTimesDB = lua.table_from(saved)
     if char is not None:
-        g.MotevePalsChar = lua.table_from(char)
+        g.KodoTimesChar = lua.table_from(char)
     for name in FILES:
-        g.LoadAddonFile((root / 'MotevePals' / name).read_text(encoding='utf-8'), name)
-    g.FireEvent('ADDON_LOADED', 'MotevePals')
+        g.LoadAddonFile((root / 'KodoTimes' / name).read_text(encoding='utf-8'), name)
+    g.FireEvent('ADDON_LOADED', 'KodoTimes')
     lua.execute('NS.JoinCrew = function(report) joined[#joined + 1] = report end')
     return lua, g, g.NS
 
@@ -106,7 +106,7 @@ def strings(g):
 
 def open_welcome(**kw):
     lua, g, ns = fresh(**kw)
-    g.SlashCmdList.MOTEVEPALS('welcome')
+    g.SlashCmdList.KODOTIMES('welcome')
     return lua, g, ns
 
 
@@ -119,7 +119,7 @@ def fit(t):
     return sizes, measured_last < clamped_first and 'width' in log and 'wrap' in log
 
 
-# texts: /mpal welcome shows exactly the agreed lines, nothing of the old placeholder
+# texts: /kodo welcome shows exactly the agreed lines, nothing of the old placeholder
 _, g, ns = open_welcome()
 k, t, x, med = strings(g)
 check(k.text == KICKER, f'top line is {k.text!r}')
@@ -129,6 +129,12 @@ check(med.text == 'GO', f'medallion text is {med.text!r}')
 for s in (k.text, t.text, x.text):
     for old in ('BULVÁR', 'FASZOS', 'fogyatékos'):
         check(old not in s, f'{old!r} is still in {s!r}')
+
+# fonts: the title and the GO medallion use the bundled Marcellus (ns.FONT_TITLE, has Ő/Ű), never the game's Morpheus
+check(ns.FONT_TITLE == 'Interface\\AddOns\\KodoTimes\\Fonts\\Marcellus-Regular.ttf', f'ns.FONT_TITLE is {ns.FONT_TITLE!r}')
+for label, fs in (('title', t), ('GO medallion', med)):
+    paths = list(fs.paths.values())
+    check(fs.font == ns.FONT_TITLE and paths and set(paths) == {ns.FONT_TITLE}, f'the {label} is set with {paths}, not ns.FONT_TITLE')
 
 # title fit: measured unbounded before any width is set, 19 -> 17 -> 16 -> 15, then clamped to the column, no wrap
 for unbounded in (True, False):
@@ -174,24 +180,24 @@ check([p.id for p in g.played.values()] == [878], f'welcome sound plays {[p.id f
 buttons = list(g.welcomeButtons.values())
 check([b['__text'] for b in buttons] == ["Let's go!", 'Kösz, nem'], f'buttons are {[b["__text"] for b in buttons]}')
 buttons[0]['__scripts'].OnClick(buttons[0])
-check(g.MotevePalsDB.welcomed is True and g.MotevePalsChar.welcomed is True and g.MotevePalsChar.noCrew is None,
+check(g.KodoTimesDB.welcomed is True and g.KodoTimesChar.welcomed is True and g.KodoTimesChar.noCrew is None,
       "Let's go! did not set welcomed / clear noCrew")
-check(g.MotevePalsDB.crew == 'MPhaverok', f"Let's go! crew is {g.MotevePalsDB.crew!r}")
+check(g.KodoTimesDB.crew == 'MPhaverok', f"Let's go! crew is {g.KodoTimesDB.crew!r}")
 check(list(g.joined.values()) == [True], "Let's go! did not call ns.JoinCrew(true)")
-check(list(g.printed.values())[-1].endswith('a haverok csatornája: MPhaverok. Saját csapat neve kell? /mpal crew <név>'),
+check(list(g.printed.values())[-1].endswith('a haverok csatornája: MPhaverok. Saját csapat neve kell? /kodo crew <név>'),
       "Let's go! printed something else")
 
 _, g, ns = fresh({'crew': 'MPkodo'})
-g.SlashCmdList.MOTEVEPALS('welcome')
+g.SlashCmdList.KODOTIMES('welcome')
 buttons = list(g.welcomeButtons.values())
 buttons[1]['__scripts'].OnClick(buttons[1])
-check(g.MotevePalsChar.welcomed is True and g.MotevePalsChar.noCrew is True, 'Kösz, nem did not set welcomed / noCrew')
-check(g.MotevePalsDB.welcomed is None, 'Kösz, nem set db.welcomed')
+check(g.KodoTimesChar.welcomed is True and g.KodoTimesChar.noCrew is True, 'Kösz, nem did not set welcomed / noCrew')
+check(g.KodoTimesDB.welcomed is None, 'Kösz, nem set db.welcomed')
 check(list(g.left.values()) == ['MPkodo'] and len(g.joined) == 0, 'Kösz, nem did not just leave the crew channel')
-check(list(g.printed.values())[-1].endswith('oké. Ha meggondolod: /mpal crew haverok'), 'Kösz, nem printed something else')
+check(list(g.printed.values())[-1].endswith('oké. Ha meggondolod: /kodo crew haverok'), 'Kösz, nem printed something else')
 
 _, g, ns = fresh({'sound': False})
-g.SlashCmdList.MOTEVEPALS('welcome')
+g.SlashCmdList.KODOTIMES('welcome')
 check(len(g.played) == 0, 'the welcome sound played with sound off')
 
 _, g, ns = fresh(char={'welcomed': True})

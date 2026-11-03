@@ -1,4 +1,4 @@
-"""Check the [Pals] chat news lines: the name is a class-coloured player link (left-click whispers), the banner keeps the plain name.
+"""Check the [Kodo Times] chat news lines: the name is a class-coloured player link (left-click whispers), the banner keeps the plain name.
 
 Runs the addon in Lua 5.1 with the stub WoW API of tools/check_volume.py.
 Needs the lupa package (an embedded Lua 5.1):  uv run --with lupa python tools/check_chatlink.py
@@ -29,15 +29,15 @@ function UnitFactionGroup() return "Alliance", "Alliance" end
 RAID_CLASS_COLORS = { MAGE = { r = 0.25, g = 0.78, b = 0.92 }, PALADIN = { r = 0.96, g = 0.55, b = 0.73 } }
 banners = {}
 function RecordBanners()
-    MotevePalsToast.text.SetText = function(self, s) banners[#banners + 1] = s end
-    rawset(MotevePalsToast, "moving", false)
+    KodoTimesToast.text.SetText = function(self, s) banners[#banners + 1] = s end
+    rawset(KodoTimesToast, "moving", false)
 end
 function ShowAll()   -- let every queued banner run its time
-    for _ = 1, 50 do MotevePalsToast.__scripts.OnUpdate(MotevePalsToast, 100) end
+    for _ = 1, 50 do KodoTimesToast.__scripts.OnUpdate(KodoTimesToast, 100) end
 end
 '''
 
-PALS = '|cffa88bff[Pals]|r '
+PALS = '|cffa88bff[Kodo Times]|r '
 # the same values as RAID_CLASS_COLORS in EXTRA; None is the fallback for an unknown class
 CLASS_RGB = {'MAGE': (0.25, 0.78, 0.92), 'PALADIN': (0.96, 0.55, 0.73), None: (0.9, 0.8, 0.6)}
 
@@ -65,10 +65,10 @@ def fresh(saved=None):
     lua.execute(EXTRA)
     g = lua.globals()
     if saved is not None:
-        g.MotevePalsDB = lua.table_from(saved)
+        g.KodoTimesDB = lua.table_from(saved)
     for name in FILES:
-        g.LoadAddonFile((root / 'MotevePals' / name).read_text(encoding='utf-8'), name)
-    g.FireEvent('ADDON_LOADED', 'MotevePals')
+        g.LoadAddonFile((root / 'KodoTimes' / name).read_text(encoding='utf-8'), name)
+    g.FireEvent('ADDON_LOADED', 'KodoTimes')
     g.RecordBanners()
     return lua, g, g.NS
 
@@ -86,12 +86,12 @@ def message(kind, msg_id, name, killer='', level='12', item=('', '', ''), cls='M
     return '~'.join(['1', kind, msg_id, level, 'Barrens', '', '', *item, cls, killer, '', name])
 
 
-# /mpal test: every chat line links your own character in its class colour (the deathlegend test is a PALADIN),
+# /kodo test: every chat line links your own character in its class colour (the deathlegend test is a PALADIN),
 # the banners are the same lines unlinked and uncoloured
 _, g, ns = fresh({'chat': True})
-g.SlashCmdList.MOTEVEPALS('test')
+g.SlashCmdList.KODOTIMES('test')
 chat, shown = news(g), banners(g)
-check(len(chat) == 9 and len(shown) == 9, f'/mpal test printed {len(chat)} news and showed {len(shown)} banners, expected 9 each')
+check(len(chat) == 9 and len(shown) == 9, f'/kodo test printed {len(chat)} news and showed {len(shown)} banners, expected 9 each')
 for i, (line, banner) in enumerate(zip(chat, shown)):
     link = plink('Tester', 'Tester', 'PALADIN' if i == 2 else 'MAGE')
     check('|Hplayer' not in banner, f'a banner has a player link: {banner!r}')
@@ -99,7 +99,7 @@ for i, (line, banner) in enumerate(zip(chat, shown)):
     check(line.replace(link, 'Tester') == banner, f'chat line {line!r} is not the banner {banner!r} with the name linked in {link!r}')
     check(line.count(link) == banner.count('Tester'), f'not every name is linked in {line!r}')
     check(line.count('|Hplayer') == line.count(link), f'a player link is not in the class colour in {line!r}')
-check(sum(line.count('|Hplayer') for line in chat) >= 8, 'the /mpal test chat lines have almost no player links')
+check(sum(line.count('|Hplayer') for line in chat) >= 8, 'the /kodo test chat lines have almost no player links')
 death = chat[1]
 check(death.endswith('  |cffff8866Tettes: Defias Pillager (14)|r'), f'the death line lost its plain killer suffix: {death!r}')
 
@@ -144,13 +144,13 @@ check(news(g) == [f"DING! {plink('Odd-Other', 'Name')}: 12"], f'sanitised link: 
 
 # chat off: no print, the banner as before
 _, g, ns = fixed({'chat': True})
-g.SlashCmdList.MOTEVEPALS('chat')
-check(g.MotevePalsDB.chat is False, '/mpal chat did not switch chat output off')
+g.SlashCmdList.KODOTIMES('chat')
+check(g.KodoTimesDB.chat is False, '/kodo chat did not switch chat output off')
 receive(g, message('levelup', '41', 'Higgsbozon Lightchaser'), 'Higgsbozon-Other')
 check(news(g) == [], f'chat off still printed {news(g)!r}')
 check(banners(g) == ['DING! Lightchaser: 12'], f'chat off banner: {list(g.banners.values())!r}')
 
-# your own news with /mpal self: whisper target is UnitName("player")
+# your own news with /kodo self: whisper target is UnitName("player")
 lua, g, ns = fixed({'chat': True, 'selfToast': True})
 lua.execute('NS.Deliver = function() end')   # nothing to send to here
 g.FireEvent('PLAYER_LEVEL_UP', 15)
@@ -171,4 +171,4 @@ if failures:
     for failure in failures:
         print('  ' + failure)
     sys.exit(1)
-print('PASS: [Pals] chat lines link the name to the sender in its class colour (tan fallback, realm kept cross-realm), banners and killer suffix unchanged')
+print('PASS: [Kodo Times] chat lines link the name to the sender in its class colour (tan fallback, realm kept cross-realm), banners and killer suffix unchanged')

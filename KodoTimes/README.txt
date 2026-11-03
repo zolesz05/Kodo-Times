@@ -1,9 +1,24 @@
-Moteve Pals 0.9.39 - WoW Forever (Interface 16001)
+Kodo Times 0.10.0 - WoW Forever (Interface 16001)
 Vicces felugró hírek a haverokról. Mindenkinek fel kell raknia, aki látni / küldeni akar.
 
 TELEPÍTÉS
-  A "MotevePals" mappát másold az Interface\AddOns mappába, majd /reload.
-  Kipróbálás egyedül: /mpal test
+  A ZIP mindkét mappáját ("KodoTimes" és "MotevePals") másold az Interface\AddOns mappába, majd indítsd újra a klienst.
+  Kipróbálás egyedül: /kodo test   (a régi /mpal és /pals parancs is működik)
+
+FRISSÍTÉS A RÉGI VERZIÓRÓL (MotevePals 0.9.x -> KodoTimes 0.10.0)
+  1. A teljes KodoTimes.zip-et csomagold ki a régi telepítés fölé (Interface\AddOns), felülírva a fájlokat.
+     A régi "MotevePals" mappát előtte NE töröld.
+  2. Lépj ki teljesen a játékból és indítsd újra a klienst (a /reload nem elég).
+  3. Minden karakter az első belépésekor egyszer átveszi a régi beállításait (hangerő, a felugró ablak helye
+     és mérete, kapcsolók, crew, üdvözlőablak). Az új mentés: KodoTimesDB / KodoTimesChar; a régit
+     (MotevePalsDB / MotevePalsChar) az addon csak olvassa.
+  A "MotevePals" mappában ezután csak egy kis híd fut ("Kodo Times – régi beállítások"): semmit nem csinál,
+  csak betölti a régi mentést. A régi fájlok ott maradhatnak, már nem töltődnek be. Ajánlott megtartani;
+  akkor törölhető, ha az első belépés után már minden karaktereddel beléptél egyszer a 0.10.0-val
+  (különben a többi karakternél újra feljön az üdvözlőablak, és a crewból kilépett altok újra belépnek).
+  Ha a régi, teljes addon is fut mellette, a Kodo Times csendben marad és figyelmeztet a chatben
+  (különben minden hír kétszer jönne): csomagold ki a teljes ZIP-et a régi fölé, és indítsd újra a játékot.
+  A régi és az új verziót használó haverok továbbra is látják egymás híreit és helyét a térképen.
 
 HOGY NÉZ KI
   Díszes WoW-szalag hírtípusonként saját háttérrel (zászló, táj, medál): balra a szereplő
@@ -25,28 +40,28 @@ CLASS-LEGENDÁK
   Halálnál nagyjából minden második alkalommal a halott classának "legendája" is beszól, pl.
   "SADISS, a paladinok istene büszke lenne rád." vagy "Chainsaw, a shamanok királya ...".
   Beállítva: Paladin = SADISS (a paladinok istene), Shaman = Chainsaw (a shamanok királya).
-  Továbbiak a játékban:  /mpal legend warrior Grommash a warriorok atyja
-  Lista:                 /mpal legend
+  Továbbiak a játékban:  /kodo legend warrior Grommash a warriorok atyja
+  Lista:                 /kodo legend
   (Vagy a Lines.lua-ban a LEGENDS részben. Mindenkinél a saját beállítása számít.)
 
 KIK KAPJÁK MEG
   A hír rejtett addon-üzenetként megy: a guildnek, a csapatnak / raidnek, és a barátlistádon lévő
   online játékosoknak. Ha a haverok se egy guildben, se egy csapatban nincsenek:
-     /mpal crew valami     (mindenki ugyanazt a nevet írja be) -> közös rejtett csatorna.
+     /kodo crew valami     (mindenki ugyanazt a nevet írja be) -> közös rejtett csatorna.
   Csak az látja, akinek fent van az addon.
 
-PARANCSOK (/mpal)
-  /mpal                 állapot és súgó
-  /mpal test            minta-hírek
-  /mpal crew <név>      közös csatorna a haveroknak  (/mpal crew  üresen = kilépés)
-  /mpal move            a felugró ablak mozgatása, a sarkánál (vagy görgővel) méretezés (újra /mpal move vagy a beállítások bezárása = kész)
-  /mpal legend <class> <név> <cím>   class-legenda beállítása halálhírekhez
-  /mpal sound           hang ki / be
-  /mpal volume <0-100>  az addon saját hangjainak hangereje százalékban (alias: /mpal hangero)
-  /mpal chat            a hírek a chatbe is ki / be (a névre kattintva suttoghatsz neki)
-  /mpal self            a saját híreid is felugranak ki / be
-  /mpal guild | group | friends   küldés ki / be az adott helyre
-  /mpal on | off        az egész ki / be
+PARANCSOK (/kodo, régi formában /mpal is)
+  /kodo                 állapot és súgó
+  /kodo test            minta-hírek
+  /kodo crew <név>      közös csatorna a haveroknak  (/kodo crew  üresen = kilépés)
+  /kodo move            a felugró ablak mozgatása, a sarkánál (vagy görgővel) méretezés (újra /kodo move vagy a beállítások bezárása = kész)
+  /kodo legend <class> <név> <cím>   class-legenda beállítása halálhírekhez
+  /kodo sound           hang ki / be
+  /kodo volume <0-100>  az addon saját hangjainak hangereje százalékban (alias: /kodo hangero)
+  /kodo chat            a hírek a chatbe is ki / be (a névre kattintva suttoghatsz neki)
+  /kodo self            a saját híreid is felugranak ki / be
+  /kodo guild | group | friends   küldés ki / be az adott helyre
+  /kodo on | off        az egész ki / be
 
 TUDNIVALÓK
   - Dungeonban / raidben harc közben a játék korlátozhatja az addon-üzeneteket; ilyenkor a hír
@@ -159,3 +174,8 @@ TUDNIVALÓK
         11 új szintlépés-sor; a 10., 20. és 50. szint saját sora is átírva. Az új sorokat csak az látja, akinél már a 0.9.38 fut.
 0.9.39: a chatbe írt [Pals] hírekben a kattintható név a karakter kasztszínében jelenik meg (ismeretlen kasztnál
         világos homokszínben), így elválik a szövegtől. A felugró ablak szövege nem változott.
+0.10.0: az addon új neve Kodo Times: a mappa KodoTimes, a parancs /kodo (a /mpal és a /pals is marad), a chatben
+        [Kodo Times] a hírek előtt, a beállításokban Kiegészítők > Kodo Times. A régi beállítások egyszer átjönnek
+        (a ZIP-ben lévő kis MotevePals híd tölti be őket), a régi és az új verziót használók továbbra is látják egymást.
+        A címek és a medálok a csomagban lévő Marcellus betűt használják: az ÜDV A KODÓKERESŐK KÖZÖTT! címben
+        az Ő már nem üres négyzet. Ha a régi, teljes addon is fut mellette, a Kodo Times csendben marad és szól.

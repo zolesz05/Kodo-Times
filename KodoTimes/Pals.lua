@@ -1,4 +1,4 @@
--- Moteve Pals - friends who all run this addon get funny pop-ups about each other:
+-- Kodo Times - friends who all run this addon get funny pop-ups about each other:
 -- level ups, deaths, profession milestones, blue / epic crafts and epic loot.
 --
 -- The news travels as hidden addon messages to the guild, the group, the online people on your
@@ -8,6 +8,8 @@ local ADDON_NAME, ns = ...
 local C = ns.C
 local format, floor, random = string.format, math.floor, math.random
 
+-- the addon-message prefix keeps the addon's old name on purpose: 0.9.x and 0.10+ clients
+-- must keep hearing each other (news and map positions) while everyone updates
 local PREFIX = "MOTEVEPAL"
 local DEFAULTS = {
     enabled = true, mapNames = false, quietRaidPvp = true, selfToast = false, chat = true, sound = true, volume = 100, time = 6.5, share = true, map = true,
@@ -15,8 +17,13 @@ local DEFAULTS = {
     point = "LEFT", relPoint = "LEFT", x = 18, y = -46, scale = 0.67,   -- left edge, above the chat
 }
 local db, char
+local dormant   -- the full old addon (0.9.x, folder MotevePals) is running too: this copy stays silent
 
-local function Print(msg) print("|cffa88bffMoteve Pals|r: " .. msg) end
+local function Print(msg) print("|cffa88bffKodo Times|r: " .. msg) end
+local function WarnDuplicate()
+    Print("|cffff5544a régi verzió (MotevePals mappa) is fut, ezért ez most nem csinál semmit.|r "
+        .. "Csomagold ki a teljes KodoTimes.zip-et a régi fölé (felülírva), és indítsd újra a játékot.")
+end
 local secret = issecretvalue or function() return false end
 
 ---------------------------------------------------------------------------
@@ -152,7 +159,6 @@ local function ProfIcon(name)
     local f = PROF_ICON[name]
     return f and ("Interface\\Icons\\" .. f) or nil
 end
-local MORPHEUS = "Fonts\\MORPHEUS.TTF"
 
 -- WoW's own sounds per news type: { sound, delay }, ...  (SOUNDKIT name, numeric id as fallback)
 local SK = SOUNDKIT or {}
@@ -255,7 +261,7 @@ function ns.PlayKind(kind)
     end
 end
 
-local T = CreateFrame("Frame", "MotevePalsToast", UIParent)
+local T = CreateFrame("Frame", "KodoTimesToast", UIParent)
 T:SetSize(TW, 76)
 T:SetFrameStrata("HIGH")
 T:SetMovable(true)
@@ -281,7 +287,7 @@ T.medGlow:SetBlendMode("ADD")
 T.medGlow:SetPoint("CENTER", T, "LEFT", TW * MED_X, 0)
 T.medGlow:SetSize(58, 58)
 T.med = T:CreateFontString(nil, "OVERLAY")
-ns.SetFontSafe(T.med, MORPHEUS, 17)
+ns.SetFontSafe(T.med, ns.FONT_TITLE, 17)
 T.med:SetPoint("CENTER", T, "LEFT", TW * MED_X, 0)
 T.med:SetShadowColor(0, 0, 0, 1); T.med:SetShadowOffset(1, -1)
 
@@ -294,7 +300,7 @@ T.kicker:SetShadowColor(0, 0, 0, 1); T.kicker:SetShadowOffset(1, -1)
 T.kicker:SetPoint("TOPLEFT", T, "TOPLEFT", TEXT_L, -14)
 T.kicker:SetText("AZEROTH BULVÁR  -  RENDKÍVÜLI KIADÁS")
 T.title = T:CreateFontString(nil, "OVERLAY")
-ns.SetFontSafe(T.title, MORPHEUS, 19)
+ns.SetFontSafe(T.title, ns.FONT_TITLE, 19)
 T.title:SetShadowColor(0, 0, 0, 1); T.title:SetShadowOffset(1, -1)
 T.title:SetPoint("TOPLEFT", T.kicker, "BOTTOMLEFT", 0, -1)
 T.text = T:CreateFontString(nil, "OVERLAY")
@@ -432,10 +438,10 @@ local function Next()
     local med = st.med:gsub("%%l", tostring(f.level or "")):gsub("%%r", tostring(f.rank or ""))
     T.med:ClearAllPoints()
     if st.gem then   -- the gem sits in the upper half of the medallion, the word below it
-        ns.SetFontSafe(T.med, MORPHEUS, 10)
+        ns.SetFontSafe(T.med, ns.FONT_TITLE, 10)
         T.med:SetPoint("CENTER", T, "LEFT", TW * MED_X, -13)
     else
-        ns.SetFontSafe(T.med, MORPHEUS, #med >= 4 and 13 or (#med == 3 and 17 or 22))
+        ns.SetFontSafe(T.med, ns.FONT_TITLE, #med >= 4 and 13 or (#med == 3 and 17 or 22))
         T.med:SetPoint("CENTER", T, "LEFT", TW * MED_X, 0)
     end
     T.med:SetText(med)
@@ -507,18 +513,19 @@ local function Toast(kind, fields, icon)
         text, chatText = text .. killer, chatText .. killer
     end
     queue[#queue + 1] = { kind = kind, text = text, icon = icon, fields = fields }
-    if db.chat then print("|cffa88bff[Pals]|r " .. chatText) end
+    if db.chat then print("|cffa88bff[Kodo Times]|r " .. chatText) end
     if not showing then Next() end
 end
 
 ---------------------------------------------------------------------------
 -- First start: "Kezdődjön a kaland!" - join the friends' channel with one click
 ---------------------------------------------------------------------------
+-- the crew channel keeps its "MP" name on purpose: 0.9.x players and stored db.crew values use it
 local DEFAULT_CREW = "MPhaverok"
 function ns.Welcome()
     if ns.welcomeFrame then ns.welcomeFrame:Show(); return end
     local st = STYLE.levelup
-    local W = CreateFrame("Frame", "MotevePalsWelcome", UIParent)
+    local W = CreateFrame("Frame", "KodoTimesWelcome", UIParent)
     ns.welcomeFrame = W
     W:SetSize(TW, math.floor(TW * st.v / 4 + 0.5))
     W:SetPoint("TOP", UIParent, "TOP", 0, -180)
@@ -543,7 +550,7 @@ function ns.Welcome()
     k:SetPoint("TOPLEFT", W, "TOPLEFT", TW * 0.308, -14)
     k:SetText("DUDE, WHERE IS MY KODO?")
     local t = W:CreateFontString(nil, "OVERLAY")
-    ns.SetFontSafe(t, MORPHEUS, 19)
+    ns.SetFontSafe(t, ns.FONT_TITLE, 19)
     t:SetTextColor(1, 0.78, 0.25); t:SetShadowColor(0, 0, 0, 1); t:SetShadowOffset(1, -1)
     t:SetPoint("TOPLEFT", k, "BOTTOMLEFT", 0, -3)
     t:SetText("ÜDV A KODÓKERESŐK KÖZÖTT!")
@@ -551,7 +558,7 @@ function ns.Welcome()
     local TextW = t.GetUnboundedStringWidth or t.GetStringWidth
     for _, size in ipairs({ 17, 16, 15 }) do
         if (TextW(t) or 0) <= TW * 0.51 then break end
-        ns.SetFontSafe(t, MORPHEUS, size)
+        ns.SetFontSafe(t, ns.FONT_TITLE, size)
     end
     t:SetWidth(TW * 0.51); t:SetWordWrap(false)
     local x = W:CreateFontString(nil, "OVERLAY")
@@ -563,7 +570,7 @@ function ns.Welcome()
     if (x:GetStringHeight() or 0) > 30 then ns.SetFontSafe(x, ns.FONT_TITLE, 10) end
     if (x:GetStringHeight() or 0) > 38 then ns.SetFontSafe(x, ns.FONT_TITLE, 9) end
     local med = W:CreateFontString(nil, "OVERLAY")
-    ns.SetFontSafe(med, MORPHEUS, 19)
+    ns.SetFontSafe(med, ns.FONT_TITLE, 19)
     med:SetPoint("CENTER", W, "LEFT", TW * MED_X, 0)
     med:SetTextColor(1, 0.78, 0.25); med:SetShadowColor(0, 0, 0, 1); med:SetShadowOffset(1, -1)
     med:SetText("GO")
@@ -581,13 +588,13 @@ function ns.Welcome()
         db.crew = db.crew or DEFAULT_CREW
         W:Hide()
         ns.JoinCrew(true)
-        Print("a haverok csatornája: " .. db.crew .. ". Saját csapat neve kell? /mpal crew <név>")
+        Print("a haverok csatornája: " .. db.crew .. ". Saját csapat neve kell? /kodo crew <név>")
     end)
     Btn("Kösz, nem", 70, function()
         char.welcomed = true; char.noCrew = true
         if db.crew and LeaveChannelByName then pcall(LeaveChannelByName, db.crew) end
         W:Hide()
-        Print("oké. Ha meggondolod: /mpal crew haverok")
+        Print("oké. Ha meggondolod: /kodo crew haverok")
     end)
     if db.sound then ns.PlayKind("welcome") end
     W:Show()
@@ -690,7 +697,7 @@ function ns.JoinCrew(report)
 end
 
 -- kind ~ fields, separated by "~"
--- raid instance, battleground or arena: no news from there (unless /mpal raidhir)
+-- raid instance, battleground or arena: no news from there (unless /kodo raidhir)
 local function InQuietPlace()
     if not db.quietRaidPvp or not IsInInstance then return false end
     local inside, kind = IsInInstance()
@@ -945,6 +952,13 @@ end
 ---------------------------------------------------------------------------
 -- Events
 ---------------------------------------------------------------------------
+local function DeepCopy(v)
+    if type(v) ~= "table" then return v end
+    local t = {}
+    for k, x in pairs(v) do t[DeepCopy(k)] = DeepCopy(x) end
+    return t
+end
+
 local ev = CreateFrame("Frame")
 for _, e in ipairs({ "ADDON_LOADED", "PLAYER_LOGIN", "PLAYER_LEVEL_UP", "PLAYER_DEAD", "SKILL_LINES_CHANGED",
                      "CHAT_MSG_LOOT", "CHAT_MSG_ADDON", "PLAYER_LOGOUT" }) do
@@ -954,10 +968,18 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3, a4)
     if e == "PLAYER_LOGOUT" then RestoreChannel(); return end   -- logout and /reload: give back a borrowed channel
     if e == "ADDON_LOADED" then
         if a1 ~= ADDON_NAME then return end
-        MotevePalsDB = MotevePalsDB or {}
-        MotevePalsChar = MotevePalsChar or {}
-        for k, v in pairs(DEFAULTS) do if MotevePalsDB[k] == nil then MotevePalsDB[k] = v end end
-        db, char = MotevePalsDB, MotevePalsChar
+        -- only the full old addon defines this (it loads first: OptionalDeps). Two copies would show every
+        -- toast twice and answer twice on PREFIX, so this one stays dormant: db stays nil, nothing runs.
+        if SlashCmdList.MOTEVEPALS then dormant = true; return end
+        -- updating from 0.9.x: the MotevePals stub keeps loading the old saved variables, and each table is
+        -- copied once, on its own (an alt logs in after the first character already made KodoTimesDB).
+        -- Deep copies, and the old tables are never written: going back to 0.9.x still finds them as they were.
+        if KodoTimesDB == nil and type(MotevePalsDB) == "table" then KodoTimesDB = DeepCopy(MotevePalsDB) end
+        if KodoTimesChar == nil and type(MotevePalsChar) == "table" then KodoTimesChar = DeepCopy(MotevePalsChar) end
+        KodoTimesDB = KodoTimesDB or {}
+        KodoTimesChar = KodoTimesChar or {}
+        for k, v in pairs(DEFAULTS) do if KodoTimesDB[k] == nil then KodoTimesDB[k] = v end end
+        db, char = KodoTimesDB, KodoTimesChar
         -- before 0.9.30 the default was TOP/TOP/0/-120 at 1.0: a profile still holding it was never
         -- moved or resized, so it moves to the new default once. posVersion is not in DEFAULTS on purpose.
         -- (a profile from before 0.9.26 had no scale: the loop above just gave it DEFAULTS.scale)
@@ -976,6 +998,7 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3, a4)
         elseif RegisterAddonMessagePrefix then RegisterAddonMessagePrefix(PREFIX) end
         return
     end
+    if dormant and e == "PLAYER_LOGIN" then C_Timer.After(8, WarnDuplicate) end
     if not db then return end
     if e == "PLAYER_LOGIN" then
         char.skills = ReadProfessions()
@@ -992,7 +1015,7 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3, a4)
                 end
             end
             if nf == 0 then
-                Print("|cffffcc00nem éred el a haverokat|r (nincs guild, csapat, online barát vagy crew). Írjátok be mindketten: /mpal crew <közös név>")
+                Print("|cffffcc00nem éred el a haverokat|r (nincs guild, csapat, online barát vagy crew). Írjátok be mindketten: /kodo crew <közös név>")
             end
         end)
     elseif e == "PLAYER_LEVEL_UP" then
@@ -1016,7 +1039,7 @@ end)
 ---------------------------------------------------------------------------
 local function OnOff(v) return v and "be" or "ki" end
 
--- move mode on / off (/mpal move, and off when the options panel is hidden)
+-- move mode on / off (/kodo move, and off when the options panel is hidden)
 function ns.SetMoveMode(on)
     if not on and not T.moving then return end   -- already off: leave a showing news toast alone
     T.close:SetAlpha(0)
@@ -1024,8 +1047,8 @@ function ns.SetMoveMode(on)
         queue = {}
         T.bg:SetTexture(BannerTex(STYLE.levelup.tex)); T.bg:SetTexCoord(0, 1, 0, STYLE.levelup.v)
         T:SetHeight(math.floor(TW * STYLE.levelup.v / 4 + 0.5))
-        T.title:SetText("MOTEVE PALS"); T.title:SetTextColor(1, 0.78, 0.25)
-        SetBodyText("Húzd a helyére, a sarkánál méretezd, majd /mpal move"); T.med:SetText("")
+        T.title:SetText("KODO TIMES"); T.title:SetTextColor(1, 0.78, 0.25)
+        SetBodyText("Húzd a helyére, a sarkánál méretezd, majd /kodo move"); T.med:SetText("")
         T:SetAlpha(1); T:Show()
         T.grip:Show(); T.grip:EnableMouse(true)
         pcall(T.EnableMouseWheel, T, true)
@@ -1040,8 +1063,10 @@ function ns.SetMoveMode(on)
     end
 end
 
-SLASH_MOTEVEPALS1, SLASH_MOTEVEPALS2 = "/mpal", "/pals"
-SlashCmdList.MOTEVEPALS = function(input)
+-- /kodo, and the old /mpal and /pals still work
+SLASH_KODOTIMES1, SLASH_KODOTIMES2, SLASH_KODOTIMES3 = "/kodo", "/mpal", "/pals"
+SlashCmdList.KODOTIMES = function(input)
+    if not db then if dormant then WarnDuplicate() end return end
     local cmd, arg = (input or ""):match("^(%S*)%s*(.-)%s*$")
     cmd = cmd:lower()
     if cmd == "test" then
@@ -1067,10 +1092,10 @@ SlashCmdList.MOTEVEPALS = function(input)
             db.crew = "MP" .. (arg:lower():gsub("%s", "")); db.welcomed = true
             char.welcomed = true; char.noCrew = nil
             ns.JoinCrew(true)
-            Print("crew: " .. db.crew .. "  - a barátaidnak ugyanezt kell beírniuk: /mpal crew " .. arg)
+            Print("crew: " .. db.crew .. "  - a barátaidnak ugyanezt kell beírniuk: /kodo crew " .. arg)
         end
     elseif cmd == "legend" or cmd == "legenda" then
-        -- /mpal legend paladin SADISS a paladinok istene
+        -- /kodo legend paladin SADISS a paladinok istene
         local class, name, title = arg:match("^(%S+)%s+(%S+)%s*(.*)$")
         local CLASSES = { warrior = "WARRIOR", paladin = "PALADIN", hunter = "HUNTER", rogue = "ROGUE", priest = "PRIEST",
             shaman = "SHAMAN", mage = "MAGE", warlock = "WARLOCK", druid = "DRUID" }
@@ -1080,7 +1105,7 @@ SlashCmdList.MOTEVEPALS = function(input)
             db.legends[class] = { name = name, title = (title ~= "" and title) or "a legenda" }
             Print(format("%s legendája: %s, %s", class, name, db.legends[class].title))
         else
-            Print("használat: /mpal legend <class> <név> <cím>   pl. /mpal legend paladin SADISS a paladinok istene")
+            Print("használat: /kodo legend <class> <név> <cím>   pl. /kodo legend paladin SADISS a paladinok istene")
             for c, lg in pairs(ns.LEGENDS) do if not db.legends[c] then print(format("   %s: %s, %s", c, lg.name, lg.title)) end end
             for c, lg in pairs(db.legends) do print(format("   %s: %s, %s (saját)", c, lg.name, lg.title)) end
         end
@@ -1089,15 +1114,15 @@ SlashCmdList.MOTEVEPALS = function(input)
     elseif cmd == "time" or cmd == "ido" or cmd == "idő" then
         local n = tonumber(arg)
         if n and n >= 1 and n <= 60 then db.time = n end
-        Print(format("a hír %.1f mp-ig marad kint (+ elhalványulás). Állítás: /mpal time <1-60>", tonumber(db.time) or 6.5))
+        Print(format("a hír %.1f mp-ig marad kint (+ elhalványulás). Állítás: /kodo time <1-60>", tonumber(db.time) or 6.5))
     elseif cmd == "volume" or cmd == "hangero" or cmd == "hangerő" then
         local n = tonumber(arg)
         if n and n == n then
             db.volume = math.max(0, math.min(100, floor(n + 0.5)))
-            Print(format("hangerő: %d%%", ns.Volume()) .. (db.sound and "" or "  (a hang most ki van kapcsolva: /mpal sound)"))
+            Print(format("hangerő: %d%%", ns.Volume()) .. (db.sound and "" or "  (a hang most ki van kapcsolva: /kodo sound)"))
             if db.sound then ns.PlayKind("welcome") end
         else
-            Print(format("hangerő: %d%%  (az addon saját hangjai). Állítás: /mpal volume <0-100>", ns.Volume()))
+            Print(format("hangerő: %d%%  (az addon saját hangjai). Állítás: /kodo volume <0-100>", ns.Volume()))
         end
     elseif cmd == "raidhir" or cmd == "raid" then
         db.quietRaidPvp = not db.quietRaidPvp
@@ -1119,10 +1144,10 @@ SlashCmdList.MOTEVEPALS = function(input)
         ns.Welcome()
     elseif cmd == "debug" then
         DEBUG = not DEBUG
-        Print("debug: " .. OnOff(DEBUG) .. (DEBUG and "  - minden küldött és kapott Pals-üzenetet kiír (a pozíciókat csak fogadáskor)" or ""))
+        Print("debug: " .. OnOff(DEBUG) .. (DEBUG and "  - minden küldött és kapott Kodo Times-üzenetet kiír (a pozíciókat csak fogadáskor)" or ""))
     elseif cmd == "ping" then
-        -- /mpal ping            -> to every path (guild, group, friends, crew)
-        -- /mpal ping Név        -> direct whisper to one player
+        -- /kodo ping            -> to every path (guild, group, friends, crew)
+        -- /kodo ping Név        -> direct whisper to one player
         local wasDebug = DEBUG; DEBUG = true
         if arg ~= "" then RawSend("PING~" .. ns.TOKEN .. "~" .. MyName(), "WHISPER", arg) else SendAll("PING~" .. ns.TOKEN .. "~" .. MyName()) end
         DEBUG = wasDebug
@@ -1143,7 +1168,7 @@ SlashCmdList.MOTEVEPALS = function(input)
         end
         if arg == "" and #paths == 0 then
             Print("|cffff5544Nincs semmi, amin át elérnéd a többieket:|r nem vagy guildben, csapatban, nincs online barátod és nincs crew. "
-                .. "Legegyszerűbb: mindketten írjátok be: /mpal crew haverok")
+                .. "Legegyszerűbb: mindketten írjátok be: /kodo crew haverok")
         else
             Print("PING elküldve: " .. (arg ~= "" and arg or table.concat(paths, ", ")) .. ". Ha a másiknál fut az addon, pár mp-en belül jön a PONG.")
         end
@@ -1155,30 +1180,30 @@ SlashCmdList.MOTEVEPALS = function(input)
     elseif cmd == "guild" then db.guild = not db.guild; Print("guildnek küldés: " .. OnOff(db.guild))
     elseif cmd == "friends" then db.friends = not db.friends; Print("barátlistának küldés: " .. OnOff(db.friends))
     elseif cmd == "group" then db.group = not db.group; Print("csapatnak küldés: " .. OnOff(db.group))
-    elseif cmd == "off" or cmd == "on" then db.enabled = (cmd == "on"); Print("Moteve Pals: " .. OnOff(db.enabled))
+    elseif cmd == "off" or cmd == "on" then db.enabled = (cmd == "on"); Print("Kodo Times: " .. OnOff(db.enabled))
     else
         Print(format("be: %s  ·  guild: %s  ·  csapat: %s  ·  barátok: %s  ·  crew: %s  ·  hang: %s  ·  hangerő: %d%%",
             OnOff(db.enabled), OnOff(db.guild), OnOff(db.group), OnOff(db.friends),
             db.crew and ((char.noCrew and db.crew .. " (ezen a karakteren kihagyva)") or
                 ((GetChannelName(db.crew) or 0) > 0 and db.crew .. " |cff7fff7f(bent vagy)|r" or db.crew .. " |cffff5544(NEM vagy bent)|r")) or "nincs",
             OnOff(db.sound), ns.Volume()))
-        print("   /mpal test            minta-hírek")
-        print("   /mpal crew <név>      közös rejtett csatorna a haveroknak (mind ugyanazt írjátok be)")
-        print("   /mpal move            a felugró ablak mozgatása, a sarkánál / görgővel méretezés")
-        print("   /mpal time <mp>       meddig maradjon kint (most: " .. (db.time or 6.5) .. " mp)")
-        print("   /mpal volume <0-100>  az addon hangjainak hangereje (most: " .. ns.Volume() .. "%)")
+        print("   /kodo test            minta-hírek")
+        print("   /kodo crew <név>      közös rejtett csatorna a haveroknak (mind ugyanazt írjátok be)")
+        print("   /kodo move            a felugró ablak mozgatása, a sarkánál / görgővel méretezés")
+        print("   /kodo time <mp>       meddig maradjon kint (most: " .. (db.time or 6.5) .. " mp)")
+        print("   /kodo volume <0-100>  az addon hangjainak hangereje (most: " .. ns.Volume() .. "%)")
         print("   bezárás: X a sarokban / bal klikk = ez,  jobb klikk = ez + a sorban állók")
-        print("   /mpal legend <class> <név> <cím>   class-legenda halálhírekhez")
-        print("   /mpal hol             ki hol van most")
-        print("   /mpal self            a saját híreid nálad is felugorjanak (alap: ki)  ·  /mpal welcome")
-        print("   /mpal weed            MORE WEED! ki/be (sűrűbb fű)")
-        print("   /mpal feny            Jó fények ki/be (kontraszt 80, fényerő 49, gamma 1.2)")
-        print("   /mpal opciok          beállítások (Beállítások > Kiegészítők > Moteve Pals)")
-        print("   /mpal ping [név]      kapcsolat-teszt (név nélkül minden csatornán)  ·  /mpal debug")
-        print("   /mpal map | share     haverok a térképen ki/be  ·  a saját helyed megosztása ki/be")
-        print("   /mpal nevek           nevek kiírva a térképen (alap: ki, csak egér rá)")
-        print("   /mpal raidhir         raidben / BG-n is menjenek a hírek (alap: nem)")
-        print("   /mpal sound | chat | self | guild | group | friends   ki/be")
-        print("   /mpal on | off")
+        print("   /kodo legend <class> <név> <cím>   class-legenda halálhírekhez")
+        print("   /kodo hol             ki hol van most")
+        print("   /kodo self            a saját híreid nálad is felugorjanak (alap: ki)  ·  /kodo welcome")
+        print("   /kodo weed            MORE WEED! ki/be (sűrűbb fű)")
+        print("   /kodo feny            Jó fények ki/be (kontraszt 80, fényerő 49, gamma 1.2)")
+        print("   /kodo opciok          beállítások (Beállítások > Kiegészítők > Kodo Times)")
+        print("   /kodo ping [név]      kapcsolat-teszt (név nélkül minden csatornán)  ·  /kodo debug")
+        print("   /kodo map | share     haverok a térképen ki/be  ·  a saját helyed megosztása ki/be")
+        print("   /kodo nevek           nevek kiírva a térképen (alap: ki, csak egér rá)")
+        print("   /kodo raidhir         raidben / BG-n is menjenek a hírek (alap: nem)")
+        print("   /kodo sound | chat | self | guild | group | friends   ki/be")
+        print("   /kodo on | off")
     end
 end

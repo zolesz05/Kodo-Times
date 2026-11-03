@@ -1,4 +1,4 @@
--- Moteve Pals - where are the others? Everyone who runs the addon shares their position every few
+-- Kodo Times - where are the others? Everyone who runs the addon shares their position every few
 -- seconds (hidden addon message), and the pals show up on the world map as class-coloured portraits
 -- with their name. Works on the zone map and the continent map too (positions are projected).
 --
@@ -13,7 +13,7 @@ local HEARTBEAT = 30        -- send even if not moved
 local STALE, GONE = 90, 300 -- fade the pin after, remove after (seconds)
 
 local pals = {}             -- name -> { map, x, y, level, class, dead, zone, t, lastGroup }
-local diag = { sent = 0, lastSent = 0, lastPos = nil, recv = {} }   -- for /mpal diag
+local diag = { sent = 0, lastSent = 0, lastPos = nil, recv = {} }   -- for /kodo diag
 ns.PalPositions = pals
 
 local function Now() return GetTime() end
@@ -448,7 +448,7 @@ local function OnGuildJoined()
     local db = ns.DB()
     if not db or not db.enabled then return end
     if not db.guild then
-        ns.Print("beléptél egy guildbe, de a guildnek küldés ki van kapcsolva. Bekapcsolás: /mpal guild")
+        ns.Print("beléptél egy guildbe, de a guildnek küldés ki van kapcsolva. Bekapcsolás: /kodo guild")
         return
     end
     ns.Print("beléptél egy guildbe: a hírek és a helyed mostantól a guilden át is mennek.")

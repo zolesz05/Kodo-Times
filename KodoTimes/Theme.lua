@@ -1,4 +1,4 @@
--- Moteve Pals - shared "arcane glass" theme helpers (same look as Moteve Quest / Moteve Chat)
+-- Kodo Times - shared "arcane glass" theme helpers
 local ADDON_NAME, ns = ...
 local format = string.format
 
@@ -90,12 +90,12 @@ end
 ns.SetFontSafe = SetFontSafe
 
 -- Keep Hungarian glyphs local to our tooltips; never change shared game fonts.
-ns.Tooltip = CreateFrame("GameTooltip", "MotevePalsTooltip", UIParent, "GameTooltipTemplate")
+ns.Tooltip = CreateFrame("GameTooltip", "KodoTimesTooltip", UIParent, "GameTooltipTemplate")
 ns.Tooltip:Hide()
 function ns.ShowTooltip()
     for i = 1, ns.Tooltip:NumLines() do
         for _, side in ipairs({ "Left", "Right" }) do
-            local fs = _G["MotevePalsTooltipText" .. side .. i]
+            local fs = _G["KodoTimesTooltipText" .. side .. i]
             if fs then SetFontSafe(fs, i == 1 and ns.FONT_BODY_BOLD or ns.FONT_BODY, i == 1 and 14 or 13) end
         end
     end

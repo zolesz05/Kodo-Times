@@ -1,4 +1,4 @@
-"""Check the addon's own sound volume (MotevePalsDB.volume) by running the addon in Lua 5.1 with a stub WoW API.
+"""Check the addon's own sound volume (KodoTimesDB.volume) by running the addon in Lua 5.1 with a stub WoW API.
 
 Needs the lupa package (an embedded Lua 5.1):  uv run --with lupa python tools/check_volume.py
 """
@@ -90,10 +90,11 @@ function FireEvent(e, ...)
     end
 end
 NS = {}
-function LoadAddonFile(src, chunkname)
+function LoadAddonFile(src, chunkname, addon)   -- addon defaults to "KodoTimes", the only one that gets NS
+    addon = addon or "KodoTimes"
     local fn, err = loadstring(src, "@" .. chunkname)
     if not fn then error(err) end
-    fn("MotevePals", NS)
+    fn(addon, addon == "KodoTimes" and NS or {})
 end
 '''
 
@@ -125,10 +126,10 @@ def fresh(saved=None, slider=True, channels=None, soundkit=None):
             continue
         g.cvars[k] = v
     if saved is not None:
-        g.MotevePalsDB = lua.table_from(saved)
+        g.KodoTimesDB = lua.table_from(saved)
     for name in FILES:
-        g.LoadAddonFile((root / 'MotevePals' / name).read_text(encoding='utf-8'), name)
-    g.FireEvent('ADDON_LOADED', 'MotevePals')
+        g.LoadAddonFile((root / 'KodoTimes' / name).read_text(encoding='utf-8'), name)
+    g.FireEvent('ADDON_LOADED', 'KodoTimes')
     return lua, g, g.NS
 
 
@@ -138,15 +139,15 @@ def plays(g):
 
 # saved value: new profiles and old ones get 100, a stored value is kept
 _, g, ns = fresh()
-check(g.MotevePalsDB.volume == 100, f'new profile volume is {g.MotevePalsDB.volume}, expected 100')
+check(g.KodoTimesDB.volume == 100, f'new profile volume is {g.KodoTimesDB.volume}, expected 100')
 _, g, ns = fresh({'sound': True, 'time': 8})
-check(g.MotevePalsDB.volume == 100, 'an old profile without volume did not get 100')
+check(g.KodoTimesDB.volume == 100, 'an old profile without volume did not get 100')
 _, g, ns = fresh({'volume': 35})
-check(g.MotevePalsDB.volume == 35 and ns.Volume() == 35, 'a stored volume of 35 was not kept')
+check(g.KodoTimesDB.volume == 35 and ns.Volume() == 35, 'a stored volume of 35 was not kept')
 
 # ns.Volume: converts, rounds and clamps whatever is stored
 for stored, want in [(None, 100), ('abc', 100), ('nan', 100), (250, 100), (-5, 0), (37.6, 38), ('40', 40), (0, 0)]:
-    g.MotevePalsDB.volume = stored
+    g.KodoTimesDB.volume = stored
     check(ns.Volume() == want, f'ns.Volume() with {stored!r} stored is {ns.Volume()}, expected {want}')
 
 # 100%: today's path, Master, no CVar touched
@@ -193,7 +194,7 @@ check(g.cvars['Sound_DialogVolume'] == '0.7', 'an unknown sound id was held more
 _, g, ns = fresh({'volume': 40})
 ns.PlayKind('death')
 g.Advance(0.5)
-g.MotevePalsDB.volume = 60
+g.KodoTimesDB.volume = 60
 ns.PlayKind('skill')
 check(plays(g) == [('Dialog', '0.40'), ('Dialog', '0.60')], f'overlapping plays {plays(g)}')
 g.Advance(2)
@@ -286,30 +287,30 @@ for setup, (channels, fails) in SETUPS.items():
         check(g.cvars['Sound_DialogVolume'] == '0.7' and g.cvars['Sound_AmbienceVolume'] == '0.6',
               f'{where}: Dialog or Ambience was not put back')
 
-# /mpal volume | hangero | hangerő and the status line
+# /kodo volume | hangero | hangerő and the status line
 _, g, ns = fresh()
-g.SlashCmdList.MOTEVEPALS('volume 35')
-check(g.MotevePalsDB.volume == 35, '/mpal volume 35 did not store 35')
-check('hangerő: 35%' in g.printed[len(g.printed)], f'/mpal volume 35 printed {g.printed[len(g.printed)]!r}')
-check(plays(g) == [('Dialog', '0.35')], f'/mpal volume 35 preview {plays(g)}')
-g.SlashCmdList.MOTEVEPALS('hangero abc')
-check(g.MotevePalsDB.volume == 35, '/mpal hangero abc changed the volume')
-check('/mpal volume <0-100>' in g.printed[len(g.printed)], '/mpal hangero abc printed no usage')
-g.SlashCmdList.MOTEVEPALS('VOLUME 250')
-check(g.MotevePalsDB.volume == 100, f'/mpal volume 250 stored {g.MotevePalsDB.volume}, expected 100')
-g.SlashCmdList.MOTEVEPALS('hangerő -3')
-check(g.MotevePalsDB.volume == 0, f'/mpal hangerő -3 stored {g.MotevePalsDB.volume}, expected 0')
-g.MotevePalsDB.volume = 70
+g.SlashCmdList.KODOTIMES('volume 35')
+check(g.KodoTimesDB.volume == 35, '/kodo volume 35 did not store 35')
+check('hangerő: 35%' in g.printed[len(g.printed)], f'/kodo volume 35 printed {g.printed[len(g.printed)]!r}')
+check(plays(g) == [('Dialog', '0.35')], f'/kodo volume 35 preview {plays(g)}')
+g.SlashCmdList.KODOTIMES('hangero abc')
+check(g.KodoTimesDB.volume == 35, '/kodo hangero abc changed the volume')
+check('/kodo volume <0-100>' in g.printed[len(g.printed)], '/kodo hangero abc printed no usage')
+g.SlashCmdList.KODOTIMES('VOLUME 250')
+check(g.KodoTimesDB.volume == 100, f'/kodo volume 250 stored {g.KodoTimesDB.volume}, expected 100')
+g.SlashCmdList.KODOTIMES('hangerő -3')
+check(g.KodoTimesDB.volume == 0, f'/kodo hangerő -3 stored {g.KodoTimesDB.volume}, expected 0')
+g.KodoTimesDB.volume = 70
 first = len(g.printed)
-g.SlashCmdList.MOTEVEPALS('')
+g.SlashCmdList.KODOTIMES('')
 out = [g.printed[i] for i in range(first + 1, len(g.printed) + 1)]
 check('hangerő: 70%' in out[0], f'status line is {out[0]!r}')
-check(any('/mpal volume <0-100>' in line and 'most: 70%' in line for line in out), 'the help has no /mpal volume line')
-g.MotevePalsDB.sound = False
+check(any('/kodo volume <0-100>' in line and 'most: 70%' in line for line in out), 'the help has no /kodo volume line')
+g.KodoTimesDB.sound = False
 count = len(plays(g))
-g.SlashCmdList.MOTEVEPALS('volume 20')
-check(g.MotevePalsDB.volume == 20 and '/mpal sound' in g.printed[len(g.printed)], 'sound off: no hint to /mpal sound')
-check(len(plays(g)) == count, 'sound off: /mpal volume still played a preview')
+g.SlashCmdList.KODOTIMES('volume 20')
+check(g.KodoTimesDB.volume == 20 and '/kodo sound' in g.printed[len(g.printed)], 'sound off: no hint to /kodo sound')
+check(len(plays(g)) == count, 'sound off: /kodo volume still played a preview')
 
 
 def find(g, pred):
@@ -321,16 +322,16 @@ _, g, ns = fresh({'volume': 35})
 checks = {f.opt.key: f for f in find(g, lambda f: f.__kind == 'CheckButton' and f.opt)}
 sy, qy = checks['sound'].__point[3], checks['quietRaidPvp'].__point[3]
 check(sy - qy == 56, f'quietRaidPvp sits {sy - qy} px under the sound checkbox, expected 26 + 30')
-slider = g.MotevePalsVolumeSlider
-check(slider is not None, 'no MotevePalsVolumeSlider')
-g.MotevePalsOptions.__scripts.OnShow(g.MotevePalsOptions)
+slider = g.KodoTimesVolumeSlider
+check(slider is not None, 'no KodoTimesVolumeSlider')
+g.KodoTimesOptions.__scripts.OnShow(g.KodoTimesOptions)
 check(slider.__value == 35, f'the slider shows {slider.__value} after opening, expected 35')
-check(g.MotevePalsDB.volume == 35 and plays(g) == [], 'opening the panel wrote the volume or played a sample')
+check(g.KodoTimesDB.volume == 35 and plays(g) == [], 'opening the panel wrote the volume or played a sample')
 slider.__scripts.OnValueChanged(slider, 52)
-check(g.MotevePalsDB.volume == 50, f'the slider at 52 stored {g.MotevePalsDB.volume}, expected 50 (steps of 5)')
+check(g.KodoTimesDB.volume == 50, f'the slider at 52 stored {g.KodoTimesDB.volume}, expected 50 (steps of 5)')
 check(plays(g) == [('Dialog', '0.50')], f'the slider sample {plays(g)}')
 slider.__scripts.OnValueChanged(slider, 70)
-check(g.MotevePalsDB.volume == 70 and len(plays(g)) == 1, 'a second change within 0.3 s played another sample')
+check(g.KodoTimesDB.volume == 70 and len(plays(g)) == 1, 'a second change within 0.3 s played another sample')
 g.Advance(0.3)
 slider.__scripts.OnValueChanged(slider, 80)
 check(len(plays(g)) == 2, 'no sample 0.3 s later')
@@ -344,14 +345,14 @@ check(slider.__alpha == 1 and slider.__enabled, 'the slider is not enabled again
 
 # without OptionsSliderTemplate: - / + in steps of 10
 _, g, ns = fresh({'volume': 35}, slider=False)
-g.MotevePalsOptions.__scripts.OnShow(g.MotevePalsOptions)
+g.KodoTimesOptions.__scripts.OnShow(g.KodoTimesOptions)
 minus = find(g, lambda f: f.__kind == 'Button' and f.__text == '-')[-1]
 plus = find(g, lambda f: f.__kind == 'Button' and f.__text == '+')[-1]
 plus.__scripts.OnClick(plus)
-check(g.MotevePalsDB.volume == 45, f'+ made {g.MotevePalsDB.volume}, expected 45')
+check(g.KodoTimesDB.volume == 45, f'+ made {g.KodoTimesDB.volume}, expected 45')
 for _ in range(6):
     minus.__scripts.OnClick(minus)
-check(g.MotevePalsDB.volume == 0, f'- six times made {g.MotevePalsDB.volume}, expected 0')
+check(g.KodoTimesDB.volume == 0, f'- six times made {g.KodoTimesDB.volume}, expected 0')
 
 if failures:
     print('FAIL:')
