@@ -2,11 +2,12 @@
 --   %n = name   %l = level   %z = zone   %s = skill   %r = skill rank   %i = item
 --   %g = the legend of the dead player's class   %t = the legend's title (see ns.LEGENDS below)
 -- Add your own freely: one line per entry, the addon picks one at random (never the same twice in a row).
+-- ns.LINES_AT[kind][level] = lines that join ns.LINES[kind] only at that exact level (e.g. levelround at 40).
 local _, ns = ...
 
 ns.LINES = {
     levelup = {
-        "%n szintet lépett (%l). A családja büszke rá.",
+        "%n szintet lépett (%l). A családja büszke lehet rá.",
         "%n most már %l-es. Ugyanolyan béna, csak több HP-val.",
         "DING! %n elérte a %l. szintet. Valaki adjon neki egy sört.",
         "Grat, %n! %l. szint, és még mindig lófasz dps-t nem tol.",
@@ -14,25 +15,36 @@ ns.LINES = {
         "%n leveluppolt (%l). Valaki hívja fel a családját, mert ő nem fogja.",
         "%n elérte a %l. szintet. Szétszakítja a talenteket.",
         "Szintlépés: %n (%l). Ennyit seggen még nem ültek.",
-        "%n %l-es lett. Ünnepeljük meg azzal, hogy megint meghal valami faszságban.",
+        "%n %l-es lett. Úgyis megint meghal valami faszságban.",
         "%n %l. szint. Hogy mi változott? Semmi. De legalább villogott.",
         "%n szintet lépett. A tükörképe szerint még mindig ugyanaz a balfasz, csak %l-es.",
         "%l. szint, %n! A közvetítést a 'Csak még egy quest' alapítvány támogatta.",
+        "Új szint, %n! A lelked értéke továbbra is nulla.",
+        "Gratulálunk, %n! Most már drágábban halsz meg.",
+        "%n, a démonod büszke rád. Hazudik.",
+        "%n: új képességek feloldva. Józan ész továbbra sem elérhető.",
+        "LEVEL UP: %n jogosultságai frissültek.",
+        "%n egy szinttel közelebb a munkanélküliséghez.",
+        "%n, anyád is büszke lenne. Ha tudná, mivel töltöd az időd.",
+        "%n, már megint nem a való életben fejlődtél.",
     },
     levelround = {
         "%n elérte a %l. szintet! Ez már nem hobbi, ez kórkép.",
-        "%l. szint, %n! Most már nyugodtan mondhatod otthon, hogy 'csak még egy dungeon'.",
         "%n kerek %l-es. Kerek szám, kerek pocak, kerek élet.",
-        "%n kerek %l. szinten. Valaki tegyen egy tortát a postaládájába.",
+        "%n kerek %l. szinten. Valaki küldjön egy coppert a postaládájába.",
         "%l, %n! Ez annyi óra, hogy a napfény már bírósági végzést kért ellene.",
         "Kerek %l. szint, %n. Aludni ki fog?",
     },
     level60 = {
-        "%n ELÉRTE A 60-AT! A napfény mostantól hivatalosan ellenség.",
+        "%n ELÉRTE A 60-AT! A napfény mostantól hivatalosan is ellenség.",
         "60! %n mostantól a raidek rabszolgája. Részvétem a családjának.",
-        "%n 60-as lett. Most kezdődik az igazi szopás: a gear.",
-        "MAX LEVEL! %n végre ráér... napi 6 órát farmolni.",
+        "%n 60-as lett. Most kezdődik az igazi szopás: A GEAR.",
+        "MAX LEVEL! %n végre ráér... napi 10 órát farmolni.",
         "%n 60. Gratulálunk, a következő lépés: elmagyarázni a főnökének, miért volt betegszabin 4 hétig.",
+        "%n 60-as lett, szagod hogy áll?",
+        "%n elérte a 60-at, reméljük a fürdőszobát is.",
+        "%n 60. W vitaminból nem szenvedsz hiányt, barátom.",
+        "Gratulálunk, %n! Most kezdődik az igazi munkanélküliség.",
     },
     death = {
         "%n meghalt itt: %z. Egy billentyűzettel kevesebb.",
@@ -40,13 +52,28 @@ ns.LINES = {
         "%n ismét a Spirit Healernél. Csak a szoki.",
         "%n: 'Laggolt a szerver!' – Egy faszt, %n.",
         "%n beadta a kulcsot (%z). WP a mobnak.",
-        "%n meghalt. Szerinte taktikai visszavonulás volt. Hasra.",
+        "%n meghalt. Szerinte taktikai visszavonulás volt. Dobott egy hasast.",
         "%n megint kimúlt. Lassan törzsvendég a temetőben, kap pecsételős kártyát.",
         "%n halott. Ha valaki talál egy agyat %z környékén, az az övé.",
         "%n meghalt. Futás a hulládért az egyetlen kardió az életében.",
+        "%n megdögölt.",
+        "%n sajnos befosott.",
+        "%n szarba lépett.",
+        "%n már nem lesz halottabb.",
+        "%n rizzeli a Spirit Healert.",
+        "%n: Geci, itt a Spirit Healer.",
+        "%n tolt egy Attilát.",
+        "%n-t elaltatták. Szép álmokat neki!",
+        "%n neki gatya. Hívjátok a Fésűst.",
+        "%n halott. Xd",
+        "%n elhunyt. %z területén. Mi a fasznak ment oda?",
+        "%n már a halakkal alszik.",
+        "%n úgy be van baszva, mint macskát szarni.",
+        "%n imádja a földet nyalogatni.",
+        "%n nem élte túl, most már tényleg a föld alatt van a teljesítménye.",
     },
     skill = {
-        "%n %s skillje elérte a %r-t. Végre valamihez ért.",
+        "%n %s skillje elérte a %r-t. Végre ért valamihez.",
         "%n %s: %r. A szakmunkás-bizonyítvány postán érkezik.",
         "%n %s skillje %r. A sok kattintástól már a csuklója is sztrájkol.",
         "Gratula, %n! %s %r. Anyád mondhatja végre, hogy van szakmád.",
@@ -74,7 +101,28 @@ ns.LINES = {
         "EPIC drop! %n: %i. Mostantól csak napszemüvegben lehet ránézni.",
         "%n: %i. A többiek közben még mindig zöldekben flangálnak.",
         "%n epic lootja: %i. Szép. Utálunk.",
-        "EPIC drop! %n: %i. Aura farming on.",
+        "EPIC drop! %n: %i. Aura farming: ON.",
+    },
+}
+
+-- extra lines of a single level: mixed into that kind's lines only at exactly that level
+ns.LINES_AT = {
+    levelround = {
+        [10] = {
+            "%n, már nem vagy teljesen kezdő. Csak majdnem.",
+        },
+        [20] = {
+            "%n, a játék most kezd igazán drága lenni.",
+        },
+        [30] = {
+            "%n, félúton vagy. Legalábbis lélekben.",
+        },
+        [40] = {
+            "Mount unlocked, %n. Pénztárca locked.",
+        },
+        [50] = {
+            "%n, már túl sok időt öltél bele ahhoz, hogy abbahagyd.",
+        },
     },
 }
 
