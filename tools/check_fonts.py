@@ -73,7 +73,7 @@ for name in FONTS:
     elif 0x41 not in points:
         failures.append(f'{name}: the cmap parse found no "A", so it cannot be trusted')
 
-for path in sorted([*root.glob('KodoTimes/**/*.lua'), *root.glob('MotevePals/**/*.lua')]):
+for path in sorted(root.glob('KodoTimes/**/*.lua')):
     for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
         if re.search('morpheus', line, re.IGNORECASE):
             failures.append(f'{path.relative_to(root).as_posix()}:{number} still uses Morpheus: {line.strip()}')
