@@ -12,21 +12,32 @@ except UnicodeDecodeError as err:
 
 PLACEHOLDERS = set('nlzsrigt')
 COUNTS = {
-    'levelup': 20, 'levelround': 5, 'level60': 9, 'death': 36, 'skill': 7,
+    'levelup': 31, 'levelround': 5, 'level60': 9, 'death': 36, 'skill': 7,
     'craftblue': 5, 'craftepic': 5, 'epicloot': 6, 'deathlegend': 8,
 }
 EXPECTED = {
     'levelup': [
         '%n szintet lépett (%l). A családja büszke lehet rá.',
         '%n %l-es lett. Úgyis megint meghal valami faszságban.',
-        'Új szint, %n! A lelked értéke továbbra is nulla.',
-        'Gratulálunk, %n! Most már drágábban halsz meg.',
+        'Új szint! %n lelkének értéke továbbra is nulla.',
+        'Gratulálunk! %n most már drágábban hal meg.',
         '%n, a démonod büszke rád. Hazudik.',
-        '%n: új képességek feloldva. Józan ész továbbra sem elérhető.',
-        'LEVEL UP: %n jogosultságai frissültek.',
-        '%n egy szinttel közelebb a munkanélküliséghez.',
-        '%n, anyád is büszke lenne. Ha tudná, mivel töltöd az időd.',
-        '%n, már megint nem a való életben fejlődtél.',
+        '%n új képességeket oldott fel. Józan ész továbbra sem elérhető.',
+        'LEVEL UP: %n felhasználói jogosultságai frissültek.',
+        '%n egy szinttel közelebb került a munkanélküliséghez.',
+        '%n anyja büszke lenne. Ha tudná, mivel tölti az idejét.',
+        '%n már megint nem a való életben fejlődött.',
+        '%n fejlődése megállíthatatlan. A társadalmi leépülése szintén.',
+        '%n fejlődése már nem természetes folyamat. Ez szakmai segítséget igényel.',
+        '%n újabb mérföldkövet ért el a digitális önpusztításban.',
+        '%n karaktere fejlődik. A teste közben lassan feladja.',
+        '%n: Egyre magasabb szintű probléma.',
+        '%n: Új szint, változatlan szellemi kapacitás.',
+        '%n: A karakter fejlődése meghaladta a gazdájáét.',
+        '%n ismét magasabb szintre emelte a problémát.',
+        '%n tapasztaltabb lett, de bölcsebbnek továbbra sem neveznénk.',
+        '%n fejlődése olyan, mint a gazdaság: papíron lenyűgöző.',
+        '%n ma is közelebb került ahhoz, aki lenni szeretne. De még messze van.',
     ],
     'levelround': [
         '%n kerek %l. szinten. Valaki küldjön egy coppert a postaládájába.',
@@ -78,11 +89,11 @@ EXPECTED = {
     ],
 }
 LEVEL_LINES = {
-    10: '%n, már nem vagy teljesen kezdő. Csak majdnem.',
-    20: '%n, a játék most kezd igazán drága lenni.',
+    10: '%n már nem teljesen kezdő. Csak majdnem.',
+    20: '%n számára a játék most kezd igazán drága lenni.',
     30: '%n, félúton vagy. Legalábbis lélekben.',
     40: 'Mount unlocked, %n. Pénztárca locked.',
-    50: '%n, már túl sok időt öltél bele ahhoz, hogy abbahagyd.',
+    50: '%n már túl sok időt ölt bele ahhoz, hogy abbahagyja.',
 }
 REMOVED = [
     "%l. szint, %n! Most már nyugodtan mondhatod otthon, hogy 'csak még egy dungeon'.",
@@ -95,6 +106,16 @@ REMOVED = [
     '%n meghalt. Szerinte taktikai visszavonulás volt. Hasra.',
     '%n %s skillje elérte a %r-t. Végre valamihez ért.',
     'EPIC drop! %n: %i. Aura farming on.',
+    'Új szint, %n! A lelked értéke továbbra is nulla.',
+    'Gratulálunk, %n! Most már drágábban halsz meg.',
+    '%n: új képességek feloldva. Józan ész továbbra sem elérhető.',
+    'LEVEL UP: %n jogosultságai frissültek.',
+    '%n egy szinttel közelebb a munkanélküliséghez.',
+    '%n, anyád is büszke lenne. Ha tudná, mivel töltöd az időd.',
+    '%n, már megint nem a való életben fejlődtél.',
+    '%n, már nem vagy teljesen kezdő. Csak majdnem.',
+    '%n, a játék most kezd igazán drága lenni.',
+    '%n, már túl sok időt öltél bele ahhoz, hogy abbahagyd.',
 ]
 
 failures = []

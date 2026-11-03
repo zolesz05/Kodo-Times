@@ -170,6 +170,8 @@ TUDNIVALÓK
         átállítva, amíg az addon hangja szól (halál kb. 2 mp, szintlépés kb. 5 mp, a többi kb. 9 mp), nem fix 4 mp-ig.
 0.9.37: az első indításkor (és /mpal welcome-ra) felugró ablak a guildhez igazítva: DUDE, WHERE IS MY KODO? /
         ÜDV A KODÓKERESŐK KÖZÖTT!, új leírással. A cím és a leírás kisebb betűvel jelenik meg, ha nem férne ki a sávba.
+0.9.38: a szintlépés-beszólások harmadik személyben szólnak (a haverok róla olvasnak, nem hozzájuk beszél), plusz
+        11 új szintlépés-sor; a 10., 20. és 50. szint saját sora is átírva. Az új sorokat csak az látja, akinél már a 0.9.38 fut.
 0.10.0: az addon új neve Kodo Times: a mappa KodoTimes, a parancs /kodo (a /mpal és a /pals is marad), a chatben
         [Kodo Times] a hírek előtt, a beállításokban Kiegészítők > Kodo Times. A régi beállítások egyszer átjönnek
         (a ZIP-ben lévő kis MotevePals híd tölti be őket), a régi és az új verziót használók továbbra is látják egymást.
