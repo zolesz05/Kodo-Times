@@ -132,3 +132,5 @@ TUDNIVALÓK
 0.9.27: a beállítások bezárásakor (vagy másik oldalra váltáskor) a felugró ablak mozgatása is befejeződik; a hely és a méret megmarad.
 0.9.28: belépés után a „Felugró ablak mozgatása” (és a /mpal move) már az első kattintásra megmutatja a felugró ablakot, hiba nélkül.
 0.9.29: Alliance karakternél Alliance-zászlós bannerek; új textúrafájlok után a játékot teljesen újra kell indítani.
+0.9.30: a felugró hír alapból a képernyő bal szélén, a chat fölött jelenik meg, kisebb méretben (0,67x). Akinél még soha
+        nem volt mozgatva vagy átméretezve, egyszer odakerül; az elhúzott vagy átméretezett hely és méret megmarad.
