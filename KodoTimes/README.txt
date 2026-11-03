@@ -179,3 +179,5 @@ TUDNIVALÓK
         (a ZIP-ben lévő kis MotevePals híd tölti be őket), a régi és az új verziót használók továbbra is látják egymást.
         A címek és a medálok a csomagban lévő Marcellus betűt használják: az ÜDV A KODÓKERESŐK KÖZÖTT! címben
         az Ő már nem üres négyzet. Ha a régi, teljes addon is fut mellette, a Kodo Times csendben marad és szól.
+0.10.1: új telepítésnél a felugró hír alapmérete 0,8x (eddig 0,67x), így a szövege jobban olvasható. A hely nem
+        változik; akinél már van mentett méret (a korábbi 0,67x is), annál az marad.
