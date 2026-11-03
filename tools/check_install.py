@@ -19,7 +19,7 @@ except ImportError:
 
 root = Path(__file__).resolve().parents[1]
 ADDON = root / 'KodoTimes'
-VERSION = '0.10.3'
+VERSION = '0.10.4'
 
 # the stub WoW API is shared with check_volume.py (importing it would run its checks)
 STUBS = next(node.value.value for node in ast.parse((root / 'tools' / 'check_volume.py').read_text(encoding='utf-8')).body
@@ -133,10 +133,10 @@ OLD_DB = {'volume': 35, 'point': 'BOTTOMRIGHT', 'relPoint': 'BOTTOMRIGHT', 'x': 
           'posVersion': 2, 'welcomed': True, 'crew': 'MPhaverok', 'chat': False,
           'knownPals': {'Miss': {'d': 'Miss Mcimbtyw', 't': 100}}, 'presetPrev': {'weed': {'grassDensity': '3'}}}
 OLD_CHAR = {'welcomed': True, 'noCrew': True, 'skills': {'Blacksmithing': 150, 'Mining': 120}}
-# what a new profile holds: DEFAULTS (toast scale 0.8) plus posVersion
+# what a new profile holds: DEFAULTS (toast scale 0.9) plus posVersion
 FRESH_DB = {'enabled': True, 'mapNames': False, 'quietRaidPvp': True, 'selfToast': False, 'chat': True, 'sound': True, 'volume': 100,
             'time': 6.5, 'share': True, 'map': True, 'guild': True, 'group': True, 'friends': True,
-            'point': 'LEFT', 'relPoint': 'LEFT', 'x': 18, 'y': -46, 'scale': 0.8, 'posVersion': 2}
+            'point': 'LEFT', 'relPoint': 'LEFT', 'x': 18, 'y': -46, 'scale': 0.9, 'posVersion': 2}
 
 # old 0.9.x saved variables still in memory, no KodoTimesDB: they are ignored, KodoTimes starts fresh
 lua, g, ns = fresh(copy.deepcopy(OLD_DB), copy.deepcopy(OLD_CHAR))
@@ -145,7 +145,7 @@ for key in ('welcomed', 'crew', 'knownPals', 'presetPrev'):
     check(key not in new_db, f'old settings: KodoTimesDB.{key} was taken from MotevePalsDB')
 check(new_db == FRESH_DB, f'old settings: KodoTimesDB is {new_db}, expected DEFAULTS {FRESH_DB}')
 check(to_py(g.KodoTimesChar) == {}, f'old settings: KodoTimesChar is {to_py(g.KodoTimesChar)}, expected {{}}')
-check(g.KodoTimesToast.__scale == 0.8, f'old settings: the toast is drawn at {g.KodoTimesToast.__scale}, expected 0.8')
+check(g.KodoTimesToast.__scale == 0.9, f'old settings: the toast is drawn at {g.KodoTimesToast.__scale}, expected 0.9')
 check(ns.Volume() == 100, f'old settings: ns.Volume() is {ns.Volume()}, expected 100')
 check(lua.eval('KodoTimesDB ~= MotevePalsDB and KodoTimesChar ~= MotevePalsChar'), 'old settings: the new tables are the old ones')
 login(g, 6.1)
@@ -164,13 +164,13 @@ check(g.MotevePalsDB is None and g.MotevePalsChar is None, 'fresh install: old s
 login(g, 6.1)
 check(g.KodoTimesWelcome is not None, 'fresh install: no welcome window 6 s after login')
 
-# a saved scale is kept: an existing profile with the old 0.67 default stays at 0.67, only new installs get 0.8
-for saved in (0.67, 1.5):
+# a saved scale is kept: an existing profile with the old 0.67 or 0.8 default keeps it, only new installs get 0.9
+for saved in (0.67, 0.8, 1.5):
     lua, g, ns = fresh(new_db={'scale': saved, 'posVersion': 2})
     check(g.KodoTimesDB.scale == saved, f'saved scale {saved}: KodoTimesDB.scale is {g.KodoTimesDB.scale}')
     check(g.KodoTimesToast.__scale == saved, f'saved scale {saved}: the toast is drawn at {g.KodoTimesToast.__scale}')
 lua, g, ns = fresh()
-check(g.KodoTimesToast.__scale == 0.8, f'fresh install: the toast is drawn at {g.KodoTimesToast.__scale}, expected 0.8')
+check(g.KodoTimesToast.__scale == 0.9, f'fresh install: the toast is drawn at {g.KodoTimesToast.__scale}, expected 0.9')
 
 # prefix and slash commands: MOTEVEPAL is registered, sent and received; /kodo, /mpal and /pals are KODOTIMES
 lua, g, ns = fresh(new_db={'chat': True})
@@ -220,5 +220,5 @@ if failures:
         print('  ' + failure)
     sys.exit(1)
 print(f'PASS: KodoTimes.toc {VERSION} (OptionalDeps only for the guard); no MotevePals/ folder, the ZIP holds only KodoTimes/; '
-      'old 0.9.x settings ignored and untouched (DEFAULTS, toast at 0.8, welcome); a saved scale (0.67/1.5) stays; '
+      'old 0.9.x settings ignored and untouched (DEFAULTS, toast at 0.9, welcome); a saved scale (0.67/0.8/1.5) stays; '
       'MOTEVEPAL prefix kept; /kodo /mpal /pals; dormant next to the old addon with a delete-the-folder warning')

@@ -14,7 +14,7 @@ local PREFIX = "MOTEVEPAL"
 local DEFAULTS = {
     enabled = true, mapNames = false, quietRaidPvp = true, selfToast = false, chat = true, sound = true, volume = 100, time = 6.5, share = true, map = true,
     guild = true, group = true, friends = true, crew = nil,
-    point = "LEFT", relPoint = "LEFT", x = 18, y = -46, scale = 0.8,    -- left edge, above the chat
+    point = "LEFT", relPoint = "LEFT", x = 18, y = -46, scale = 0.9,    -- left edge, above the chat
 }
 local db, char
 local dormant   -- a leftover full old addon (0.9.x, folder MotevePals) is running too: this copy stays silent
@@ -973,7 +973,7 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3, a4)
         -- before 0.9.30 the default was TOP/TOP/0/-120 at 1.0: a profile still holding it was never
         -- moved or resized, so it moves to the new default once. posVersion is not in DEFAULTS on purpose.
         -- (a profile from before 0.9.26 had no scale: the loop above just gave it DEFAULTS.scale)
-        -- DEFAULTS.scale is 0.8 since 0.10.1 (0.67 before): only a new or a reset profile gets it, a saved scale stays
+        -- DEFAULTS.scale is 0.9 since 0.10.4 (0.8 before, 0.67 before 0.10.1): only a new or a reset profile gets it, a saved scale stays
         if (db.posVersion or 1) < 2 then
             if db.point == "TOP" and db.relPoint == "TOP" and math.abs(tonumber(db.x) or 0) < 0.5
                 and math.abs((tonumber(db.y) or 0) + 120) < 0.5 and (db.scale == 1 or db.scale == DEFAULTS.scale) then
