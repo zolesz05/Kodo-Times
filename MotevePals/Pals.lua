@@ -75,9 +75,17 @@ local function MyName()
 end
 ns.MyName = MyName
 
-local function Fill(line, f)
+-- a chat player link: left-click whispers target, right-click opens the usual menu
+local function PlayerLink(target, label)
+    target = target and tostring(target):gsub("[|:]", "") or ""
+    if target == "" then return label end
+    return format("|Hplayer:%s|h[%s]|h", target, label)
+end
+
+-- forChat: the name becomes a player link to f.sender (the banner keeps the plain name)
+local function Fill(line, f, forChat)
     return (line:gsub("%%(%a)", function(k)
-        if k == "n" then return Nick(f.name)
+        if k == "n" then return forChat and PlayerLink(f.sender, Nick(f.name)) or Nick(f.name)
         elseif k == "l" then return tostring(f.level or "?")
         elseif k == "z" then return f.zone or "?"
         elseif k == "s" then return f.skill or "?"
@@ -479,12 +487,14 @@ local function Toast(kind, fields, icon)
             kind = "deathlegend"
         end
     end
-    local text = Fill(Pick(kind, fields.level), fields)
+    local line = Pick(kind, fields.level)
+    local text, chatText = Fill(line, fields), Fill(line, fields, true)
     if (kind == "death" or kind == "deathlegend") and fields.killer and fields.killer ~= "" then
-        text = text .. "  |cffff8866Tettes: " .. fields.killer .. "|r"
+        local killer = "  |cffff8866Tettes: " .. fields.killer .. "|r"
+        text, chatText = text .. killer, chatText .. killer
     end
     queue[#queue + 1] = { kind = kind, text = text, icon = icon, fields = fields }
-    if db.chat then print("|cffa88bff[Pals]|r " .. text) end
+    if db.chat then print("|cffa88bff[Pals]|r " .. chatText) end
     if not showing then Next() end
 end
 
@@ -680,6 +690,7 @@ local function Announce(kind, f)
     ns.Deliver(msg)
     if db.selfToast then   -- by default your own news only go to the others
         f.name = MyName()
+        f.sender = UnitName("player")
         f.class = classFile
         Toast(kind, f, f.icon)
     end
@@ -773,7 +784,9 @@ local function OnAddonMessage(prefix, msg, chan, sender)
     if ns.IsMe(name) then return end
     if ns.NotePal then ns.NotePal(name, chan, p[14]) end
     if p[14] and p[14] ~= "" and #p[14] > #name then name = p[14] end   -- show the full name (sender names can be cut)
-    local f = { name = name, level = p[4], zone = p[5], skill = p[6], rank = p[7],
+    -- whisper target: keeps "-Realm" only for players from another realm, like Blizzard's own links
+    local f = { name = name, sender = Ambiguate and Ambiguate(sender, "none") or sender,
+        level = p[4], zone = p[5], skill = p[6], rank = p[7],
         itemID = p[8] ~= "" and p[8] or nil, itemName = p[9], quality = p[10], class = p[11],
         killer = p[12] ~= "" and p[12] or nil }
     local icon = p[13] and p[13] ~= "" and (tonumber(p[13]) or p[13]) or nil
@@ -1011,19 +1024,19 @@ SlashCmdList.MOTEVEPALS = function(input)
     local cmd, arg = (input or ""):match("^(%S*)%s*(.-)%s*$")
     cmd = cmd:lower()
     if cmd == "test" then
-        local me = MyName()
+        local me, meSender = MyName(), UnitName("player")
         local _, myClass = UnitClass("player")
-        Toast("levelup", { name = me, class = myClass, level = (UnitLevel("player") or 1) + 1 })
-        Toast("death", { name = me, class = myClass, zone = GetRealZoneText and GetRealZoneText() or "Barrens", killer = "Defias Pillager (14)" })
-        Toast("deathlegend", { name = me, class = "PALADIN", zone = "Barrens", legend = ns.LEGENDS.PALADIN })
-        Toast("levelround", { name = me, class = myClass, level = 30 })
-        Toast("level60", { name = me, class = myClass, level = 60 })
-        Toast("skill", { name = me, class = myClass, skill = "Blacksmithing", rank = 150 }, ProfIcon("Blacksmithing"))
-        Toast("craftblue", { name = me, class = myClass, itemID = 7960, itemName = "Truesilver Champion", quality = 3 },
+        Toast("levelup", { name = me, sender = meSender, class = myClass, level = (UnitLevel("player") or 1) + 1 })
+        Toast("death", { name = me, sender = meSender, class = myClass, zone = GetRealZoneText and GetRealZoneText() or "Barrens", killer = "Defias Pillager (14)" })
+        Toast("deathlegend", { name = me, sender = meSender, class = "PALADIN", zone = "Barrens", legend = ns.LEGENDS.PALADIN })
+        Toast("levelround", { name = me, sender = meSender, class = myClass, level = 30 })
+        Toast("level60", { name = me, sender = meSender, class = myClass, level = 60 })
+        Toast("skill", { name = me, sender = meSender, class = myClass, skill = "Blacksmithing", rank = 150 }, ProfIcon("Blacksmithing"))
+        Toast("craftblue", { name = me, sender = meSender, class = myClass, itemID = 7960, itemName = "Truesilver Champion", quality = 3 },
             GetItemIcon and GetItemIcon(7960))
-        Toast("epicloot", { name = me, class = myClass, itemID = 2243, itemName = "Hand of Edward the Odd", quality = 4 },
+        Toast("epicloot", { name = me, sender = meSender, class = myClass, itemID = 2243, itemName = "Hand of Edward the Odd", quality = 4 },
             GetItemIcon and GetItemIcon(2243))
-        Toast("craftepic", { name = me, class = myClass, itemID = 12798, itemName = "Annihilator", quality = 4 },
+        Toast("craftepic", { name = me, sender = meSender, class = myClass, itemID = 12798, itemName = "Annihilator", quality = 4 },
             GetItemIcon and GetItemIcon(12798))
     elseif cmd == "crew" then
         if arg == "" then

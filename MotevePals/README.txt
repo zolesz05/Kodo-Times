@@ -1,4 +1,4 @@
-Moteve Pals 0.9.34 - WoW Forever (Interface 16001)
+Moteve Pals 0.9.35 - WoW Forever (Interface 16001)
 Vicces felugró hírek a haverokról. Mindenkinek fel kell raknia, aki látni / küldeni akar.
 
 TELEPÍTÉS
@@ -43,7 +43,7 @@ PARANCSOK (/mpal)
   /mpal legend <class> <név> <cím>   class-legenda beállítása halálhírekhez
   /mpal sound           hang ki / be
   /mpal volume <0-100>  az addon saját hangjainak hangereje százalékban (alias: /mpal hangero)
-  /mpal chat            a hírek a chatbe is ki / be
+  /mpal chat            a hírek a chatbe is ki / be (a névre kattintva suttoghatsz neki)
   /mpal self            a saját híreid is felugranak ki / be
   /mpal guild | group | friends   küldés ki / be az adott helyre
   /mpal on | off        az egész ki / be
@@ -146,3 +146,5 @@ TUDNIVALÓK
         (Párbeszéd, ha az ki van kapcsolva: Környezet, végül Effektek), aminek a hangerejét kb. 4 mp-re átállítja,
         utána (és kilépéskor / /reload-kor) visszaállítja. Ezalatt a csatorna többi hangja is ezen a hangerőn szól.
         Ha a játék közben összeomlik, a csatorna hangereje a hang beállításokban állítható vissza.
+0.9.35: a chatbe írt [Pals] hírekben a karakter neve kattintható: bal kattintásra suttogás neki (/w Név), jobb kattintásra
+        a szokásos menü. A felugró ablak szövege nem változott.
