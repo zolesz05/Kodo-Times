@@ -105,11 +105,13 @@ def check(cond, what):
         failures.append(what)
 
 
-def fresh(saved=None, slider=True, channels=None):
-    """A new client: the addon loaded, ADDON_LOADED fired with these saved variables and sound CVars."""
+def fresh(saved=None, slider=True, channels=None, soundkit=None):
+    """A new client: the addon loaded, ADDON_LOADED fired with these saved variables, sound CVars and SOUNDKIT."""
     lua = lua51.LuaRuntime(unpack_returned_tuples=True)
     lua.execute(STUBS)
     g = lua.globals()
+    if soundkit is not None:
+        g.SOUNDKIT = lua.table_from(soundkit)
     g.noSliderTemplate = not slider
     cv = {
         'Sound_MasterVolume': '1.0',
@@ -164,24 +166,54 @@ check(plays(g) == [], f'0% still played {plays(g)}')
 _, g, ns = fresh({'volume': 40})
 ns.PlayKind('levelup')
 check(plays(g) == [('Dialog', '0.40')], f'40% plays {plays(g)}, expected Dialog at 0.40')
-g.Advance(3.9)
-check(g.cvars['Sound_DialogVolume'] == '0.40', 'Dialog was restored before the 4 s hold ended')
+g.Advance(4.8)
+check(g.cvars['Sound_DialogVolume'] == '0.40', 'Dialog was restored before the 4.9 s LEVELUP hold ended')
 g.Advance(0.2)
 check(g.cvars['Sound_DialogVolume'] == '0.7', f'Dialog is {g.cvars["Sound_DialogVolume"]} after the hold, expected 0.7')
 check('Sound_MasterVolume' not in list(g.cvarWrites.values()), 'Sound_MasterVolume was written')
 check(g.cvars['Sound_SFXVolume'] == '0.5' and g.cvars['Sound_AmbienceVolume'] == '0.6', 'another channel was changed')
 
-# overlapping plays: one saved original, only the newest timer restores
+# each sound holds the channel for its own length + 0.5 s; an id without a measured length keeps 4 s
+for kind, hold in [('death', 1.8), ('levelup', 4.9), ('skill', 8.9), ('epicloot', 8.9), ('welcome', 8.9)]:
+    _, g, ns = fresh({'volume': 40})
+    ns.PlayKind(kind)
+    g.Advance(hold - 0.1)
+    check(g.cvars['Sound_DialogVolume'] == '0.40', f'{kind}: Dialog was restored before its {hold} s hold ended')
+    g.Advance(0.2)
+    check(g.cvars['Sound_DialogVolume'] == '0.7', f'{kind}: Dialog is {g.cvars["Sound_DialogVolume"]} after its {hold} s hold')
+_, g, ns = fresh({'volume': 40}, soundkit={'RAID_WARNING': 12345})   # a client with another death sound id
+ns.PlayKind('death')
+check(g.played[len(g.played)].id == 12345, 'the reloaded addon did not play SOUNDKIT.RAID_WARNING')
+g.Advance(3.9)
+check(g.cvars['Sound_DialogVolume'] == '0.40', 'an unknown sound id was held less than 4 s')
+g.Advance(0.2)
+check(g.cvars['Sound_DialogVolume'] == '0.7', 'an unknown sound id was held more than 4 s')
+
+# overlapping plays: one saved original, the channel is put back when the longest sound has ended
 _, g, ns = fresh({'volume': 40})
 ns.PlayKind('death')
-g.Advance(2)
+g.Advance(0.5)
 g.MotevePalsDB.volume = 60
 ns.PlayKind('skill')
 check(plays(g) == [('Dialog', '0.40'), ('Dialog', '0.60')], f'overlapping plays {plays(g)}')
-g.Advance(2.5)
-check(g.cvars['Sound_DialogVolume'] == '0.60', 'the first timer restored while the second play was still in its hold')
 g.Advance(2)
+check(g.cvars['Sound_DialogVolume'] == '0.60', 'the first timer restored while the second play was still in its hold')
+g.Advance(6.8)
+check(g.cvars['Sound_DialogVolume'] == '0.60', 'the channel was restored before the second sound ended')
+g.Advance(0.2)
 check(g.cvars['Sound_DialogVolume'] == '0.7', f'after overlapping plays Dialog is {g.cvars["Sound_DialogVolume"]}, expected 0.7')
+
+# a short sound inside a longer one does not restore early: LEVELUP's hold still decides
+_, g, ns = fresh({'volume': 40})
+ns.PlayKind('levelup')
+g.Advance(0.5)
+ns.PlayKind('death')
+g.Advance(2)
+check(g.cvars['Sound_DialogVolume'] == '0.40', 'a short sound restored the channel while LEVELUP was still playing')
+g.Advance(2.3)
+check(g.cvars['Sound_DialogVolume'] == '0.40', 'the channel was restored before LEVELUP\'s hold ended')
+g.Advance(0.2)
+check(g.cvars['Sound_DialogVolume'] == '0.7', f'after LEVELUP and a short sound Dialog is {g.cvars["Sound_DialogVolume"]}')
 
 # logout / reload during the hold: restored at once, the later timer changes nothing
 _, g, ns = fresh({'volume': 40})
@@ -189,7 +221,7 @@ ns.PlayKind('death')
 g.FireEvent('PLAYER_LOGOUT')
 check(g.cvars['Sound_DialogVolume'] == '0.7', 'PLAYER_LOGOUT did not restore the borrowed channel')
 g.cvars['Sound_DialogVolume'] = '0.3'   # the user moves the slider afterwards
-g.Advance(5)
+g.Advance(10)
 check(g.cvars['Sound_DialogVolume'] == '0.3', 'a stale timer overwrote the channel after logout')
 
 # a channel switched off by the user is skipped
@@ -198,7 +230,8 @@ ns.PlayKind('death')
 check(plays(g) == [('Ambience', '0.50')], f'with Dialog off plays {plays(g)}, expected Ambience')
 _, g, ns = fresh({'volume': 50}, channels={'Sound_EnableDialog': '0', 'Sound_EnableAmbience': '0'})
 ns.PlayKind('death')
-check(plays(g) == [('SFX', '0.50')], f'with Dialog and Ambience off plays {plays(g)}, expected SFX')
+check(plays(g) == [('Master', None)], f'with Dialog and Ambience off plays {plays(g)}, expected Master')
+check(len(g.cvarWrites) == 0, 'with Dialog and Ambience off a CVar was written')
 _, g, ns = fresh({'volume': 50}, channels={'Sound_DialogVolume': None})
 ns.PlayKind('death')
 check(plays(g) == [('Ambience', '0.50')], f'without a Dialog CVar plays {plays(g)}, expected Ambience')
@@ -227,6 +260,31 @@ _, g, ns = fresh({'volume': 50}, channels={'Sound_EnableDialog': '0', 'Sound_Ena
 ns.PlayKind('death')
 check(plays(g) == [('Master', None)], f'with every channel off plays {plays(g)}, expected Master')
 check(len(g.cvarWrites) == 0, 'a CVar was written with no channel to borrow')
+
+# SFX is never borrowed: it carries the game's own loot, craft and skill-up sounds, played with these toasts
+SETUPS = {
+    'all channels on': ({}, {}),
+    'Dialog and Ambience off': ({'Sound_EnableDialog': '0', 'Sound_EnableAmbience': '0'}, {}),
+    'Dialog and Ambience erroring': ({}, {'Dialog': 'error', 'Ambience': 'error'}),
+    'Dialog and Ambience returning false': ({}, {'Dialog': 'false', 'Ambience': 'false'}),
+}
+for setup, (channels, fails) in SETUPS.items():
+    for kind in ['epicloot', 'craftblue', 'craftepic', 'skill', 'welcome']:
+        _, g, ns = fresh({'volume': 50}, channels=channels)
+        for channel, how in fails.items():
+            g.playFails[channel] = how
+        ns.PlayKind(kind)
+        sfx = []
+        for _ in range(20):
+            sfx.append(g.cvars['Sound_SFXVolume'])
+            g.Advance(0.5)
+        where = f'{kind} with {setup}'
+        check('Sound_SFXVolume' not in list(g.cvarWrites.values()), f'{where}: Sound_SFXVolume was written')
+        check(set(sfx) == {'0.5'}, f'{where}: Sound_SFXVolume went {sfx}')
+        want = [('Dialog', '0.50')] if setup == 'all channels on' else [('Master', None)]
+        check(plays(g) == want, f'{where} plays {plays(g)}, expected {want}')
+        check(g.cvars['Sound_DialogVolume'] == '0.7' and g.cvars['Sound_AmbienceVolume'] == '0.6',
+              f'{where}: Dialog or Ambience was not put back')
 
 # /mpal volume | hangero | hangerő and the status line
 _, g, ns = fresh()
@@ -300,4 +358,5 @@ if failures:
     for failure in failures:
         print('  ' + failure)
     sys.exit(1)
-print('PASS: volume saved and clamped; 0 silent, 100 on Master, 1-99 on a borrowed channel put back; slash and panel')
+print('PASS: volume saved and clamped; 0 silent, 100 on Master, 1-99 on Dialog or Ambience (never SFX) put back when '
+      'the sound ends; slash and panel')

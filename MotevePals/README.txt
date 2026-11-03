@@ -1,4 +1,4 @@
-Moteve Pals 0.9.35 - WoW Forever (Interface 16001)
+Moteve Pals 0.9.36 - WoW Forever (Interface 16001)
 Vicces felugró hírek a haverokról. Mindenkinek fel kell raknia, aki látni / küldeni akar.
 
 TELEPÍTÉS
@@ -148,3 +148,8 @@ TUDNIVALÓK
         Ha a játék közben összeomlik, a csatorna hangereje a hang beállításokban állítható vissza.
 0.9.35: a chatbe írt [Pals] hírekben a karakter neve kattintható: bal kattintásra suttogás neki (/w Név), jobb kattintásra
         a szokásos menü. A felugró ablak szövege nem változott.
+0.9.36: 1-99%-nál az addon már soha nem állítja az Effektek csatorna hangerejét: azon szólnak a játék saját zsákmány-,
+        szakma- és tárgykészítés-hangjai, amelyek a hírrel egy időben indulnak, és eddig halkabban kezdődtek,
+        a végükön pedig felhangosodtak. Ha a Párbeszéd és a Környezet csatorna sem használható, az addon hangja a
+        Masteren szól, teljes hangerőn (mint 100%-nál). A kölcsönvett csatorna hangereje most pontosan addig marad
+        átállítva, amíg az addon hangja szól (halál kb. 2 mp, szintlépés kb. 5 mp, a többi kb. 9 mp), nem fix 4 mp-ig.
