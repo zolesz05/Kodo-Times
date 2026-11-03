@@ -134,5 +134,7 @@ TUDNIVALÓK
 0.9.29: Alliance karakternél Alliance-zászlós bannerek; új textúrafájlok után a játékot teljesen újra kell indítani.
 0.9.30: a felugró hír alapból a képernyő bal szélén, a chat fölött jelenik meg, kisebb méretben (0,67x). Akinél még soha
         nem volt mozgatva vagy átméretezve, egyszer odakerül; az elhúzott vagy átméretezett hely és méret megmarad.
-0.9.31: szintlépés-hír (a haveroknak és a saját értesítő is) csak 5 szintenként (5, 10, 15 ... 55) és 60-nál megy ki;
+0.9.31: új és átírt beszólások (szintlépés, 60-as szint, halál, szakma, epic loot); a 10., 20., 30., 40. és 50. szint
+        saját sort is kapott, ami csak azon a szinten jöhet ki. Az új sorokat csak az látja, akinél már a 0.9.31 fut.
+0.9.32: szintlépés-hír (a haveroknak és a saját értesítő is) csak 5 szintenként (5, 10, 15 ... 55) és 60-nál megy ki;
         a többi szintnél nincs hír. A régebbi verziójú haverok szintlépései továbbra is minden szintnél megjelennek.

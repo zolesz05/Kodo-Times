@@ -23,12 +23,22 @@ local secret = issecretvalue or function() return false end
 -- Text
 ---------------------------------------------------------------------------
 local lastLine = {}
-local function Pick(kind)
+-- the kind's lines, plus the extra lines of this exact level (ns.LINES_AT) when it has any
+local function Pick(kind, level)
     local list = ns.LINES[kind]
     if not list or #list == 0 then return "" end
+    local extra = ns.LINES_AT and ns.LINES_AT[kind]
+    extra = extra and extra[tonumber(level)]
+    if extra then
+        local pool = {}
+        for _, line in ipairs(list) do pool[#pool + 1] = line end
+        for _, line in ipairs(extra) do pool[#pool + 1] = line end
+        list = pool
+    end
     local i = random(#list)
-    if #list > 1 and i == lastLine[kind] then i = (i % #list) + 1 end
-    lastLine[kind] = i
+    -- remember the text, not the index: the pool differs from level to level
+    if #list > 1 and list[i] == lastLine[kind] then i = (i % #list) + 1 end
+    lastLine[kind] = list[i]
     return list[i]
 end
 
@@ -405,7 +415,7 @@ local function Toast(kind, fields, icon)
             kind = "deathlegend"
         end
     end
-    local text = Fill(Pick(kind), fields)
+    local text = Fill(Pick(kind, fields.level), fields)
     if (kind == "death" or kind == "deathlegend") and fields.killer and fields.killer ~= "" then
         text = text .. "  |cffff8866Tettes: " .. fields.killer .. "|r"
     end
