@@ -172,7 +172,7 @@ g.Advance(0.2)
 check(len(g.welcomeFS) == 4, 'a new character did not get the welcome window 6 s after login')
 check([p.id for p in g.played.values()] == [878], f'welcome sound plays {[p.id for p in g.played.values()]}')
 buttons = list(g.welcomeButtons.values())
-check([b['__text'] for b in buttons] == ["Let's go!", 'Kösz, nem'], f'buttons are {[b['__text'] for b in buttons]}')
+check([b['__text'] for b in buttons] == ["Let's go!", 'Kösz, nem'], f'buttons are {[b["__text"] for b in buttons]}')
 buttons[0]['__scripts'].OnClick(buttons[0])
 check(g.MotevePalsDB.welcomed is True and g.MotevePalsChar.welcomed is True and g.MotevePalsChar.noCrew is None,
       "Let's go! did not set welcomed / clear noCrew")
