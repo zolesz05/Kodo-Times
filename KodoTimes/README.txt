@@ -181,3 +181,5 @@ TUDNIVALÓK
         töröld: ha a régi, teljes addon is fut mellette, a Kodo Times csendben marad, és erre figyelmeztet.
 0.10.4: új telepítésnél vagy visszaállított beállításoknál a felugró hír alapmérete 0,9x (eddig 0,8x). A hely nem
         változik; akinél már van mentett méret (a korábbi 0,8x és 0,67x is), annál az marad.
+0.10.5: a kétrészes karakternevekből már az első részt írja ki (felugró hír, chat, térkép, tooltip, /kodo hol),
+        pl. "Higgsbozon Lightchaser" helyett "Higgsbozon". A névre kattintva ugyanannak a karakternek nyílik suttogás.

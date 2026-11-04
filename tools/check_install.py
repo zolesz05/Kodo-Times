@@ -19,7 +19,7 @@ except ImportError:
 
 root = Path(__file__).resolve().parents[1]
 ADDON = root / 'KodoTimes'
-VERSION = '0.10.4'
+VERSION = '0.10.5'
 
 # the stub WoW API is shared with check_volume.py (importing it would run its checks)
 STUBS = next(node.value.value for node in ast.parse((root / 'tools' / 'check_volume.py').read_text(encoding='utf-8')).body
@@ -181,7 +181,7 @@ check(len(pings) == 1 and pings[0].prefix == 'MOTEVEPAL' and pings[0].chan == 'W
       f'/kodo ping Tester2 sent {[(s.prefix, s.chan, s.target) for s in pings]}')
 msg = '~'.join(['1', 'levelup', '77', '12', 'Barrens', '', '', '', '', '', 'MAGE', '', '', 'Miss Mcimbtyw'])
 g.FireEvent('CHAT_MSG_ADDON', 'MOTEVEPAL', msg, 'WHISPER', 'Miss-Home')
-check(any(line.startswith(PALS) and 'Mcimbtyw' in line for line in g.printed.values()), 'a MOTEVEPAL news message gave no chat line')
+check(any(line.startswith(PALS) and '[Miss]' in line for line in g.printed.values()), 'a MOTEVEPAL news message gave no chat line')
 check((g.SLASH_KODOTIMES1, g.SLASH_KODOTIMES2, g.SLASH_KODOTIMES3) == ('/kodo', '/mpal', '/pals'),
       f'slash commands are {(g.SLASH_KODOTIMES1, g.SLASH_KODOTIMES2, g.SLASH_KODOTIMES3)}')
 check(lua.eval('type(SlashCmdList.KODOTIMES)') == 'function', 'SlashCmdList.KODOTIMES is not a function')

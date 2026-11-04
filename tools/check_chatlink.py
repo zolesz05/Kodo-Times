@@ -118,29 +118,37 @@ def receive(g, msg, sender):
     g.FireEvent('CHAT_MSG_ADDON', 'MOTEVEPAL', msg, 'WHISPER', sender)
 
 
-# a pal from another realm with a two-part display name: the link whispers Name-Realm, shows the second part
+# ns.Nick (banner, chat, map pin, tooltip and /kodo hol): the first part of a two-part name, no realm
+_, g, ns = fresh({'chat': True})
+for full, nick in [('Higgsbozon Lightchaser', 'Higgsbozon'), ('Higgsbozon Lightchaser-Other', 'Higgsbozon'),
+                   ('Tester', 'Tester'), ('Tester-Other', 'Tester'), (None, '?')]:
+    got = ns.Nick(full)
+    check(got == nick, f'Nick({full!r}) is {got!r}, expected {nick!r}')
+
+
+# a pal from another realm with a two-part display name: the link whispers Name-Realm, shows the first part
 _, g, ns = fixed({'chat': True})
 receive(g, message('levelup', '11', 'Higgsbozon Lightchaser'), 'Higgsbozon-Other')
 receive(g, message('death', '12', 'Higgsbozon Lightchaser', killer='Hogger'), 'Higgsbozon-Other')
 receive(g, message('epicloot', '13', 'Higgsbozon Lightchaser', item=('2243', 'Hand of Edward the Odd', '4')), 'Higgsbozon-Other')
 chat, shown = news(g), banners(g)
-link = plink('Higgsbozon-Other', 'Lightchaser')
+link = plink('Higgsbozon-Other', 'Higgsbozon')
 item = '|cffa335ee|Hitem:2243::::::::|h[Hand of Edward the Odd]|h|r'
 check(chat == [f'DING! {link}: 12', f'RIP {link}, Barrens  |cffff8866Tettes: Hogger|r', f'EPIC {link}: {item}'],
       f'cross-realm chat lines: {chat!r}')
-check(shown == ['DING! Lightchaser: 12', 'RIP Lightchaser, Barrens  |cffff8866Tettes: Hogger|r', f'EPIC Lightchaser: {item}'],
+check(shown == ['DING! Higgsbozon: 12', 'RIP Higgsbozon, Barrens  |cffff8866Tettes: Hogger|r', f'EPIC Higgsbozon: {item}'],
       f'cross-realm banners: {shown!r}')
 
 # a pal from our realm: no realm in the whisper target
 _, g, ns = fixed({'chat': True})
 receive(g, message('levelup', '21', 'Miss Mcimbtyw'), 'Miss-Home')
-check(news(g) == [f"DING! {plink('Miss', 'Mcimbtyw')}: 12"], f'same-realm chat line: {news(g)!r}')
-check(banners(g) == ['DING! Mcimbtyw: 12'], f'same-realm banner: {g.banners[1]!r}')
+check(news(g) == [f"DING! {plink('Miss', 'Miss')}: 12"], f'same-realm chat line: {news(g)!r}')
+check(banners(g) == ['DING! Miss: 12'], f'same-realm banner: {g.banners[1]!r}')
 
 # a broken sender cannot break the link
 _, g, ns = fixed({'chat': True})
 receive(g, message('levelup', '31', 'Odd Name'), 'Od|d:-Other')
-check(news(g) == [f"DING! {plink('Odd-Other', 'Name')}: 12"], f'sanitised link: {news(g)!r}')
+check(news(g) == [f"DING! {plink('Odd-Other', 'Odd')}: 12"], f'sanitised link: {news(g)!r}')
 
 # chat off: no print, the banner as before
 _, g, ns = fixed({'chat': True})
@@ -148,7 +156,7 @@ g.SlashCmdList.KODOTIMES('chat')
 check(g.KodoTimesDB.chat is False, '/kodo chat did not switch chat output off')
 receive(g, message('levelup', '41', 'Higgsbozon Lightchaser'), 'Higgsbozon-Other')
 check(news(g) == [], f'chat off still printed {news(g)!r}')
-check(banners(g) == ['DING! Lightchaser: 12'], f'chat off banner: {list(g.banners.values())!r}')
+check(banners(g) == ['DING! Higgsbozon: 12'], f'chat off banner: {list(g.banners.values())!r}')
 
 # your own news with /kodo self: whisper target is UnitName("player")
 lua, g, ns = fixed({'chat': True, 'selfToast': True})
@@ -161,10 +169,10 @@ check(banners(g) == ['DING! Tester: 15'], f'own news banner: {list(g.banners.val
 for msg_id, cls in [('51', 'XYZ'), ('52', '')]:
     _, g, ns = fixed({'chat': True})
     receive(g, message('levelup', msg_id, 'Higgsbozon Lightchaser', cls=cls), 'Higgsbozon-Other')
-    expected = f"DING! {plink('Higgsbozon-Other', 'Lightchaser', None)}: 12"
+    expected = f"DING! {plink('Higgsbozon-Other', 'Higgsbozon', None)}: 12"
     check(colour(None) == '|cffe5cc99', f'fallback colour is {colour(None)!r}')
     check(news(g) == [expected], f'class {cls!r} chat line: {news(g)!r}, expected {expected!r}')
-    check(banners(g) == ['DING! Lightchaser: 12'], f'class {cls!r} banner: {list(g.banners.values())!r}')
+    check(banners(g) == ['DING! Higgsbozon: 12'], f'class {cls!r} banner: {list(g.banners.values())!r}')
 
 if failures:
     print('FAIL:')
