@@ -181,7 +181,7 @@ check(len(pings) == 1 and pings[0].prefix == 'MOTEVEPAL' and pings[0].chan == 'W
       f'/kodo ping Tester2 sent {[(s.prefix, s.chan, s.target) for s in pings]}')
 msg = '~'.join(['1', 'levelup', '77', '12', 'Barrens', '', '', '', '', '', 'MAGE', '', '', 'Miss Mcimbtyw'])
 g.FireEvent('CHAT_MSG_ADDON', 'MOTEVEPAL', msg, 'WHISPER', 'Miss-Home')
-check(any(line.startswith(PALS) and 'Mcimbtyw' in line for line in g.printed.values()), 'a MOTEVEPAL news message gave no chat line')
+check(any(line.startswith(PALS) and '[Miss]' in line for line in g.printed.values()), 'a MOTEVEPAL news message gave no chat line')
 check((g.SLASH_KODOTIMES1, g.SLASH_KODOTIMES2, g.SLASH_KODOTIMES3) == ('/kodo', '/mpal', '/pals'),
       f'slash commands are {(g.SLASH_KODOTIMES1, g.SLASH_KODOTIMES2, g.SLASH_KODOTIMES3)}')
 check(lua.eval('type(SlashCmdList.KODOTIMES)') == 'function', 'SlashCmdList.KODOTIMES is not a function')

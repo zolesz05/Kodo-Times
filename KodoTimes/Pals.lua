@@ -58,12 +58,12 @@ local function ItemText(id, name, q)
     return format("|cff%s[%s]|r", col, name or "?")
 end
 
--- characters here have two-part names ("Higgsbozon Lightchaser"): show the second part
+-- characters here have two-part names ("Higgsbozon Lightchaser"): show the first part
 local function Nick(name)
     if not name then return "?" end
     name = tostring(name):gsub("%-[^%s]*$", "")          -- drop "-Realm"
-    local second = name:match("^%S+%s+(%S+)")
-    return second or name
+    local first = name:match("^(%S+)")
+    return first or name
 end
 ns.Nick = Nick
 
