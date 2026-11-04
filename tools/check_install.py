@@ -19,7 +19,7 @@ except ImportError:
 
 root = Path(__file__).resolve().parents[1]
 ADDON = root / 'KodoTimes'
-VERSION = '0.10.4'
+VERSION = '0.10.5'
 
 # the stub WoW API is shared with check_volume.py (importing it would run its checks)
 STUBS = next(node.value.value for node in ast.parse((root / 'tools' / 'check_volume.py').read_text(encoding='utf-8')).body
