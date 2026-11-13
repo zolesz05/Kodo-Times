@@ -14,9 +14,24 @@ local PREFIX = "MOTEVEPAL"
 local DEFAULTS = {
     enabled = true, mapNames = false, quietRaidPvp = true, selfToast = false, chat = true, sound = true, volume = 100, time = 6.5, share = true, map = true,
     guild = true, group = true, friends = true, crew = nil,
+    -- which news show up here (the sending is not filtered: the pals get all of yours)
+    showLevel = true, showDeath = true, showSkill = true, showCraftBlue = true, showCraftEpic = true, showEpicLoot = true,
     point = "LEFT", relPoint = "LEFT", x = 18, y = -46, scale = 0.9,    -- left edge, above the chat
 }
 local db, char
+
+-- news kind -> the KodoTimesDB switch that lets it show up here (Options: "Milyen híreket lássak")
+local SHOW_KEY = {
+    levelup = "showLevel", levelround = "showLevel", level60 = "showLevel",
+    death = "showDeath", deathlegend = "showDeath",
+    skill = "showSkill", craftblue = "showCraftBlue", craftepic = "showCraftEpic", epicloot = "showEpicLoot",
+}
+-- true when this kind of news may show up here; an unknown kind (or no db yet) always may
+function ns.WantsKind(kind)
+    local key = SHOW_KEY[kind]
+    if not key or not db then return true end
+    return db[key] ~= false
+end
 local dormant   -- a leftover full old addon (0.9.x, folder MotevePals) is running too: this copy stays silent
 
 local function Print(msg) print("|cffa88bffKodo Times|r: " .. msg) end
@@ -716,7 +731,7 @@ local function Announce(kind, f)
     seen[id] = true
     local msg = table.concat(parts, "~")
     ns.Deliver(msg)
-    if db.selfToast then   -- by default your own news only go to the others
+    if db.selfToast and ns.WantsKind(kind) then   -- by default your own news only go to the others
         f.name = MyName()
         f.sender = UnitName("player")
         f.class = classFile
@@ -820,6 +835,7 @@ local function OnAddonMessage(prefix, msg, chan, sender)
     local icon = p[13] and p[13] ~= "" and (tonumber(p[13]) or p[13]) or nil
     if f.itemID and GetItemIcon then icon = GetItemIcon(tonumber(f.itemID)) or icon end
     if p[2] == "skill" and not icon then icon = ProfIcon(f.skill) end
+    if not ns.WantsKind(p[2]) then return end   -- switched off here: already seen, so it never comes back later
     Toast(p[2], f, icon)
 end
 

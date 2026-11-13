@@ -22,6 +22,20 @@ local OPTIONS = {
       tip = "Sűrűbb és messzebbre látszó fű és növényzet:\ngroundEffectDensity 256, groundEffectFade 370, groundEffectDist 500.\nKikapcsolva visszaáll az alapértékre.", preset = "weed" },
     { key = "goodLight",    text = "Jó fények",
       tip = "Kontraszt 80, fényerő 49, gamma 1.2.\nKikapcsolva visszaáll az alapértékre.", preset = "light" },
+    -- only what shows up here: the pals still get every news of yours (Pals.lua ns.WantsKind)
+    { head = "Milyen híreket lássak" },
+    { key = "showLevel",     text = "Szintlépés",
+      tip = "Szintlépés-hírek, a kerek (10, 20 ...) és a 60-as szint is.\nCsak azt szabályozza, mi jelenik meg nálad: a haverok a te szintlépéseidet ugyanúgy megkapják." },
+    { key = "showDeath",     text = "Halál",
+      tip = "Halálhírek, a legendás halálhír is.\nCsak azt szabályozza, mi jelenik meg nálad: a haverok a te halálhíreidet ugyanúgy megkapják." },
+    { key = "showSkill",     text = "Szakma",
+      tip = "Szakma-mérföldkövek (50, 75 ... és minden új szint).\nCsak azt szabályozza, mi jelenik meg nálad: a haverok a te szakma-híreidet ugyanúgy megkapják." },
+    { key = "showCraftBlue", text = "Kék craft",
+      tip = "Kék (rare) tárgyak craftolása.\nCsak azt szabályozza, mi jelenik meg nálad: a haverok a te kék craftjaidat ugyanúgy megkapják." },
+    { key = "showCraftEpic", text = "Epic craft",
+      tip = "Epic tárgyak craftolása.\nCsak azt szabályozza, mi jelenik meg nálad: a haverok a te epic craftjaidat ugyanúgy megkapják." },
+    { key = "showEpicLoot",  text = "Epic loot",
+      tip = "Epic tárgyak lootolása.\nCsak azt szabályozza, mi jelenik meg nálad: a haverok a te epic lootjaidat ugyanúgy megkapják." },
 }
 
 -- graphics presets: on = these CVars, off = the game's defaults
