@@ -10,6 +10,7 @@ import ast
 import copy
 import re
 import sys
+import tempfile
 import zipfile
 
 try:
@@ -19,7 +20,10 @@ except ImportError:
 
 root = Path(__file__).resolve().parents[1]
 ADDON = root / 'KodoTimes'
-VERSION = '0.10.5'
+sys.path.insert(0, str(root / 'tools'))
+from package_addon import VERSION_RE, build_zip   # noqa: E402  (the packager only runs its build under __main__)
+
+VERSION = VERSION_RE.search((ADDON / 'KodoTimes.toc').read_text(encoding='utf-8')).group(1)
 
 # the stub WoW API is shared with check_volume.py (importing it would run its checks)
 STUBS = next(node.value.value for node in ast.parse((root / 'tools' / 'check_volume.py').read_text(encoding='utf-8')).body
@@ -96,14 +100,17 @@ check(not (root / 'MotevePals').exists(), 'the MotevePals/ bridge folder still e
 pals = (ADDON / 'Pals.lua').read_text(encoding='utf-8')
 for name in ('MotevePalsDB', 'MotevePalsChar', 'DeepCopy'):
     check(name not in pals, f'Pals.lua still references {name}')
-with zipfile.ZipFile(root / 'downloads' / 'KodoTimes.zip') as archive:
-    names = archive.namelist()
-    outside = [n for n in names if not n.startswith('KodoTimes/')]
-    check(names and not outside, f'downloads/KodoTimes.zip has entries outside KodoTimes/: {outside}')
-    zip_toc = archive.read('KodoTimes/KodoTimes.toc').decode('utf-8') if 'KodoTimes/KodoTimes.toc' in names else ''
-    zip_version = re.search(r'^## Version:\s*(\S+)', zip_toc, re.MULTILINE)
-    check(zip_version and zip_version.group(1) == VERSION,
-          f'downloads/KodoTimes.zip holds version {zip_version and zip_version.group(1)}, expected {VERSION} (run tools/package_addon.py)')
+# the ZIP is built from the source into a temporary folder, as the release workflow builds it
+with tempfile.TemporaryDirectory() as tmp:
+    zip_version_built, zip_path = build_zip(Path(tmp))
+    with zipfile.ZipFile(zip_path) as archive:
+        names = archive.namelist()
+        outside = [n for n in names if not n.startswith('KodoTimes/')]
+        check(names and not outside, f'KodoTimes.zip has entries outside KodoTimes/: {outside}')
+        zip_toc = archive.read('KodoTimes/KodoTimes.toc').decode('utf-8') if 'KodoTimes/KodoTimes.toc' in names else ''
+        zip_version = VERSION_RE.search(zip_toc)
+        check(zip_version and zip_version.group(1) == VERSION == zip_version_built,
+              f'KodoTimes.zip holds version {zip_version and zip_version.group(1)}, expected {VERSION}')
 
 
 def fresh(old_db=None, old_char=None, new_db=None, new_char=None, old_addon=False):

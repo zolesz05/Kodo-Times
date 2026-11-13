@@ -1,0 +1,67 @@
+# A push to main with a new ## Version in KodoTimes/KodoTimes.toc publishes release v<version> with the asset
+# KodoTimes.zip, so https://github.com/zolesz05/Kodo-Times/releases/latest/download/KodoTimes.zip is always the newest.
+# The release notes are the version's KodoTimes/README.txt changelog entry. An existing tag means nothing to do.
+name: release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read the version and look for its tag
+        id: version
+        run: |
+          version=$(sed -n 's/^## Version:[[:space:]]*\([^[:space:]]*\).*/\1/p' KodoTimes/KodoTimes.toc | head -n 1)
+          if [ -z "$version" ]; then
+            echo "::error::KodoTimes/KodoTimes.toc has no ## Version"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          rc=0
+          git ls-remote --exit-code --tags origin "refs/tags/v$version" > /dev/null || rc=$?
+          case "$rc" in
+            0) echo "exists=true" >> "$GITHUB_OUTPUT"; echo "v$version already exists: nothing to release." ;;
+            2) echo "exists=false" >> "$GITHUB_OUTPUT"; echo "v$version is new: releasing." ;;
+            *) echo "::error::git ls-remote failed ($rc)"; exit 1 ;;
+          esac
+
+      - uses: astral-sh/setup-uv@v6
+        if: steps.version.outputs.exists == 'false'
+        with:
+          version: "0.13.7"
+
+      - name: Run the check scripts
+        if: steps.version.outputs.exists == 'false'
+        run: |
+          for script in tools/check_*.py; do
+            echo "::group::$script"
+            uv run --no-project --with lupa python "$script"
+            echo "::endgroup::"
+          done
+
+      - name: Build KodoTimes.zip
+        if: steps.version.outputs.exists == 'false'
+        run: uv run --no-project python tools/package_addon.py --out dist
+
+      - name: Create the release
+        if: steps.version.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          notes="$(uv run --no-project python tools/check_version.py --notes)"
+          gh release create "v$VERSION" dist/KodoTimes.zip --target "$GITHUB_SHA" --title "Kodo Times $VERSION" --notes "$notes"

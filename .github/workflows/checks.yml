@@ -1,0 +1,40 @@
+# Every tools/check_*.py on pull requests and on main; on a pull request also the version-bump check:
+# a change under KodoTimes/ (everything there goes into the released ZIP) needs a higher ## Version.
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # check_version.py --base diffs against the merge base
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.7"
+
+      - name: Run the check scripts
+        run: |
+          failed=""
+          for script in tools/check_*.py; do
+            echo "::group::$script"
+            uv run --no-project --with lupa python "$script" || failed="$failed $script"
+            echo "::endgroup::"
+          done
+          if [ -n "$failed" ]; then
+            echo "::error::failed:$failed"
+            exit 1
+          fi
+
+      - name: Version bump against the base branch
+        if: github.event_name == 'pull_request'
+        run: uv run --no-project python tools/check_version.py --base "origin/${{ github.base_ref }}"

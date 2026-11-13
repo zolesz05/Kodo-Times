@@ -2,11 +2,11 @@
 
 **Kodo Times** (korábbi nevén Moteve Pals) egy közösségi World of Warcraft addon a WoW Forever klienshez. Vicces, díszes felugró híreket mutat a haverok szintlépéseiről, halálairól, szakma-mérföldköveiről és értékes tárgyairól, valamint megjeleníti az addont használó társakat a világtérképen.
 
-**Aktuális verzió: 0.10.5**
+[![Legfrissebb kiadás](https://img.shields.io/github/v/release/zolesz05/Kodo-Times?label=Aktu%C3%A1lis%20verzi%C3%B3)](https://github.com/zolesz05/Kodo-Times/releases/latest)
 
-[Legfrissebb addon letöltése (ZIP)](https://github.com/zolesz05/Kodo-Times/raw/main/downloads/KodoTimes.zip)
+[Legfrissebb addon letöltése (ZIP)](https://github.com/zolesz05/Kodo-Times/releases/latest/download/KodoTimes.zip)
 
-A `downloads` mappában csak a legfrissebb telepíthető `KodoTimes.zip` szerepel. Frissítéskor ugyanaz a letöltési link használható. A 0.10.0-s átnevezéssel a link is új lett: a régi `downloads/MotevePals.zip` már nem létezik. A ZIP egyetlen mappát tartalmaz: `KodoTimes`.
+A link mindig a legutóbbi kiadás `KodoTimes.zip` fájlját tölti le, így frissítéskor is ugyanaz használható. A korábbi verziók a [Releases oldalon](https://github.com/zolesz05/Kodo-Times/releases) érhetők el. A korábbi, a repositoryba feltöltött ZIP-re mutató letöltési link megszűnt, helyette ezt használd. A ZIP egyetlen mappát tartalmaz: `KodoTimes`.
 
 ## Telepítés és első indítás
 
@@ -132,7 +132,20 @@ A teljes addon a [KodoTimes](KodoTimes/) mappában található. A [részletes le
 
 ## Csomag frissítése
 
-A repository gyökeréből:
+A telepíthető ZIP-et a GitHub Actions építi a `main` ágból, kézzel nem kell újraépíteni vagy feltölteni:
+
+1. Az addon (`KodoTimes/` mappa) minden változásánál emeld a verziót a `KodoTimes/KodoTimes.toc` `## Version` sorában és a `KodoTimes/README.txt` első sorában, és írj a változásnaplóba egy `<verzió>:` bejegyzést.
+2. A pull requesten a `checks` workflow lefuttatja az összes `tools/check_*.py` szkriptet, és piros lesz, ha a `KodoTimes/` alatt változott valami, de a verzió nem emelkedett.
+3. A merge után a `release` workflow létrehozza a `v<verzió>` kiadást a `KodoTimes.zip` fájllal, a változásnapló-bejegyzéssel mint kiadási jegyzettel. Ha a `v<verzió>` tag már létezik, nem csinál semmit.
+
+A verzió fejlécét, a változásnapló-bejegyzést és a verzióemelést helyben így ellenőrzi (`--notes`: a kiadási jegyzet):
+
+```sh
+python tools/check_version.py --base origin/main
+python tools/check_version.py --notes
+```
+
+A ZIP helyben is elkészíthető, a `dist/KodoTimes.zip` fájlba (ezt a git nem követi):
 
 ```sh
 python tools/package_addon.py
@@ -169,4 +182,4 @@ python tools/check_fonts.py
 python tools/check_rename.py
 ```
 
-A csomagoló ellenőrzi a TOC bejegyzéseit és a ZIP tartalmát, csak a `KodoTimes` mappát teszi a `downloads/KodoTimes.zip` fájlba, és eltávolítja ebből a mappából a korábbi verziószámos és a régi nevű (`MotevePals*.zip`) addoncsomagokat. A forrást, a ZIP-et és a README-t együtt kell feltölteni.
+A csomagoló ellenőrzi a TOC bejegyzéseit és a ZIP tartalmát, és csak a `KodoTimes` mappát teszi a ZIP-be (alapból `dist/KodoTimes.zip`, a `--out` kapcsolóval máshová). A `check_install.py` ugyanígy, ideiglenes mappába építi és vizsgálja a ZIP-et.
