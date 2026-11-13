@@ -1,4 +1,4 @@
-Kodo Times 0.10.4 - WoW Forever (Interface 16001)
+Kodo Times 0.10.6 - WoW Forever (Interface 16001)
 Vicces felugró hírek a haverokról. Mindenkinek fel kell raknia, aki látni / küldeni akar.
 
 TELEPÍTÉS
@@ -28,6 +28,10 @@ MIRŐL SZÓL
   - Kék vagy epic craft ("You create: ...")
   - Epic loot
   Minden eseményhez sok szöveg van, véletlenszerűen választ (kétszer egymás után nem ugyanazt).
+  Hírtípusonként kikapcsolható, mi jelenjen meg nálad: Beállítások > AddOns > Kodo Times, "Milyen híreket lássak"
+  (Szintlépés - a kerek és a 60-as szint is -, Halál - a legendás halálhír is -, Szakma, Kék craft, Epic craft,
+  Epic loot). Ez csak a nálad megjelenő híreket szűri (felugró ablak, chatsor, hang): a haverok a te ilyen híreidet
+  ugyanúgy megkapják. A kikapcsolt időben jött hírek visszakapcsolás után sem jönnek elő; a /kodo test mindig mindet mutatja.
   A szövegek a Lines.lua fájlban vannak: bátran írjátok át / bővítsétek.
 
 CLASS-LEGENDÁK
@@ -183,3 +187,5 @@ TUDNIVALÓK
         változik; akinél már van mentett méret (a korábbi 0,8x és 0,67x is), annál az marad.
 0.10.5: a kétrészes karakternevekből már az első részt írja ki (felugró hír, chat, térkép, tooltip, /kodo hol),
         pl. "Higgsbozon Lightchaser" helyett "Higgsbozon". A névre kattintva ugyanannak a karakternek nyílik suttogás.
+0.10.6: a beállításokban új "Milyen híreket lássak" blokk: hírtípusonként (szintlépés, halál, szakma, kék craft,
+        epic craft, epic loot) kikapcsolható, mi jelenjen meg nálad. A küldés nem változik: a haverok minden hírt megkapnak.

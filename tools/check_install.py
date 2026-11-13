@@ -136,6 +136,7 @@ OLD_CHAR = {'welcomed': True, 'noCrew': True, 'skills': {'Blacksmithing': 150, '
 # what a new profile holds: DEFAULTS (toast scale 0.9) plus posVersion
 FRESH_DB = {'enabled': True, 'mapNames': False, 'quietRaidPvp': True, 'selfToast': False, 'chat': True, 'sound': True, 'volume': 100,
             'time': 6.5, 'share': True, 'map': True, 'guild': True, 'group': True, 'friends': True,
+            'showLevel': True, 'showDeath': True, 'showSkill': True, 'showCraftBlue': True, 'showCraftEpic': True, 'showEpicLoot': True,
             'point': 'LEFT', 'relPoint': 'LEFT', 'x': 18, 'y': -46, 'scale': 0.9, 'posVersion': 2}
 
 # old 0.9.x saved variables still in memory, no KodoTimesDB: they are ignored, KodoTimes starts fresh
