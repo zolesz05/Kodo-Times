@@ -1,9 +1,8 @@
 -- Kodo Times - friends who all run this addon get funny pop-ups about each other:
 -- level ups, deaths, profession milestones, blue / epic crafts and epic loot.
 --
--- The news travels as hidden addon messages to the guild, the group, the online people on your
--- friends list, and (optional) a private "crew" channel - so it works between friends who are not
--- in the same guild or group. Only players who have the addon see anything.
+-- The news travels as hidden addon messages to the guild, the group and the online people on your
+-- friends list (and by whisper to the pals met earlier). Only players who have the addon see anything.
 local ADDON_NAME, ns = ...
 local C = ns.C
 local format, floor, random = string.format, math.floor, math.random
@@ -13,7 +12,7 @@ local format, floor, random = string.format, math.floor, math.random
 local PREFIX = "MOTEVEPAL"
 local DEFAULTS = {
     enabled = true, mapNames = false, quietRaidPvp = true, selfToast = false, chat = true, sound = true, volume = 100, time = 6.5, share = true, map = true,
-    guild = true, group = true, friends = true, crew = nil,
+    guild = true, group = true, friends = true,
     -- which news show up here (the sending is not filtered: the pals get all of yours)
     showLevel = true, showDeath = true, showSkill = true, showCraftBlue = true, showCraftEpic = true, showEpicLoot = true,
     point = "LEFT", relPoint = "LEFT", x = 18, y = -46, scale = 0.9,    -- left edge, above the chat
@@ -533,10 +532,9 @@ local function Toast(kind, fields, icon)
 end
 
 ---------------------------------------------------------------------------
--- First start: "Kezdődjön a kaland!" - join the friends' channel with one click
+-- First start: "Kezdődjön a kaland!" - once per character
 ---------------------------------------------------------------------------
--- the crew channel keeps its "MP" name on purpose: 0.9.x players and stored db.crew values use it
-local DEFAULT_CREW = "MPhaverok"
+local NEWS_PATHS = "a hírek a guilden, a csapaton és a barátlistán át mennek a haverokhoz (akinél fut az addon)."
 function ns.Welcome()
     if ns.welcomeFrame then ns.welcomeFrame:Show(); return end
     local st = STYLE.levelup
@@ -599,17 +597,14 @@ function ns.Welcome()
     end
     Btn("Let's go!", -70, function()
         db.welcomed = true
-        char.welcomed = true; char.noCrew = nil
-        db.crew = db.crew or DEFAULT_CREW
+        char.welcomed = true
         W:Hide()
-        ns.JoinCrew(true)
-        Print("a haverok csatornája: " .. db.crew .. ". Saját csapat neve kell? /kodo crew <név>")
+        Print(NEWS_PATHS)
     end)
     Btn("Kösz, nem", 70, function()
-        char.welcomed = true; char.noCrew = true
-        if db.crew and LeaveChannelByName then pcall(LeaveChannelByName, db.crew) end
+        char.welcomed = true
         W:Hide()
-        Print("oké. Ha meggondolod: /kodo crew haverok")
+        Print("oké. Az ablak újra: /kodo welcome")
     end)
     if db.sound then ns.PlayKind("welcome") end
     W:Show()
@@ -669,11 +664,6 @@ local function SendAll(msg, noFriends)
             end
         end
     end
-    if db.crew then
-        local id = GetChannelName(db.crew)
-        if id and id > 0 then S("CHANNEL", id)
-        elseif DEBUG then Print("|cffff5544a crew csatornán nem vagy bent (" .. db.crew .. ")|r") end
-    end
     return allGood
 end
 
@@ -684,31 +674,23 @@ end
 ns.Print = Print
 function ns.DB() return db end
 
--- join the crew channel; check a bit later whether it worked (and try the other join function)
-function ns.JoinCrew(report)
-    if not db.crew then return end
-    local id = GetChannelName(db.crew)
-    if id and id > 0 then if report then Print("crew csatornán bent vagy (" .. db.crew .. ")") end return end
-    if JoinTemporaryChannel then pcall(JoinTemporaryChannel, db.crew) end
-    C_Timer.After(2, function()
-        local id2 = GetChannelName(db.crew)
-        if (not id2 or id2 == 0) and JoinChannelByName then pcall(JoinChannelByName, db.crew) end
-        C_Timer.After(2, function()
-            local id3 = GetChannelName(db.crew)
-            if id3 and id3 > 0 then
-                for i = 1, (NUM_CHAT_WINDOWS or 10) do
-                    local cf = _G["ChatFrame" .. i]
-                    if cf then
-                        if ChatFrame_RemoveChannel then pcall(ChatFrame_RemoveChannel, cf, db.crew) end
-                        if cf.RemoveChannel then pcall(cf.RemoveChannel, cf, db.crew) end
-                    end
-                end
-                if report then Print("|cff7fff7fbeléptél a crew csatornába (" .. db.crew .. ")|r") end
-            else
-                Print("|cffff5544nem sikerült belépni a crew csatornába (" .. db.crew .. ").|r Próbáld kézzel: /join " .. db.crew)
-            end
-        end)
-    end)
+-- 0.10.7: the crew channel is gone, and every character leaves it once. Channel membership belongs to the
+-- character but KodoTimesDB is shared by the account: the old name stays in db.legacyCrew (never removed,
+-- the other characters still need it) and the done flag is per character (char.crewGone)
+local OLD_CREW = "MPhaverok"
+local CREW_TRIES = { 5, 15, 30 }   -- seconds after login; the client may rejoin its saved channels late
+local function LeaveOldCrew(try)
+    if char.crewGone then return end
+    local joined = false
+    for _, name in ipairs({ OLD_CREW, db.legacyCrew ~= OLD_CREW and db.legacyCrew or nil }) do
+        local id = GetChannelName and GetChannelName(name)
+        if id and id ~= 0 then
+            joined = true
+            pcall(LeaveChannelByName, name)
+        end
+    end
+    -- done only when the last try finds no old channel; otherwise the next login tries again
+    if try == #CREW_TRIES and not joined then char.crewGone = true end
 end
 
 -- kind ~ fields, separated by "~"
@@ -986,6 +968,8 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3, a4)
         KodoTimesChar = KodoTimesChar or {}
         for k, v in pairs(DEFAULTS) do if KodoTimesDB[k] == nil then KodoTimesDB[k] = v end end
         db, char = KodoTimesDB, KodoTimesChar
+        -- 0.10.7: no crew channel any more; the old name is kept so every character can leave it (LeaveOldCrew)
+        if db.crew then db.legacyCrew, db.crew = db.crew, nil end
         -- before 0.9.30 the default was TOP/TOP/0/-120 at 1.0: a profile still holding it was never
         -- moved or resized, so it moves to the new default once. posVersion is not in DEFAULTS on purpose.
         -- (a profile from before 0.9.26 had no scale: the loop above just gave it DEFAULTS.scale)
@@ -1009,11 +993,13 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3, a4)
     if not db then return end
     if e == "PLAYER_LOGIN" then
         char.skills = ReadProfessions()
+        if not char.crewGone then
+            for i, t in ipairs(CREW_TRIES) do C_Timer.After(t, function() LeaveOldCrew(i) end) end
+        end
         -- welcome is per character: every new character gets the "Let's go" window once
-        if db.crew and not char.noCrew then C_Timer.After(5, function() ns.JoinCrew(false) end) end
         if not char.welcomed then C_Timer.After(6, function() if ns.Welcome then ns.Welcome() end end) end
         C_Timer.After(12, function()
-            if not char.welcomed or (db.crew and not char.noCrew) or IsInGuild() or IsInGroup() then return end
+            if not char.welcomed or IsInGuild() or IsInGroup() then return end
             local nf = 0
             if C_FriendList and C_FriendList.GetNumFriends then
                 for i = 1, C_FriendList.GetNumFriends() do
@@ -1022,7 +1008,7 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3, a4)
                 end
             end
             if nf == 0 then
-                Print("|cffffcc00nem éred el a haverokat|r (nincs guild, csapat, online barát vagy crew). Írjátok be mindketten: /kodo crew <közös név>")
+                Print("|cffffcc00nem éred el a haverokat|r (nincs guild, csapat vagy online barát). Lépjetek be egy guildbe, vagy hívjátok meg egymást egy csapatba.")
             end
         end)
     elseif e == "PLAYER_LEVEL_UP" then
@@ -1092,15 +1078,8 @@ SlashCmdList.KODOTIMES = function(input)
         Toast("craftepic", { name = me, sender = meSender, class = myClass, itemID = 12798, itemName = "Annihilator", quality = 4 },
             GetItemIcon and GetItemIcon(12798))
     elseif cmd == "crew" then
-        if arg == "" then
-            if db.crew and LeaveChannelByName then pcall(LeaveChannelByName, db.crew) end
-            db.crew = nil; Print("crew csatorna kikapcsolva.")
-        else
-            db.crew = "MP" .. (arg:lower():gsub("%s", "")); db.welcomed = true
-            char.welcomed = true; char.noCrew = nil
-            ns.JoinCrew(true)
-            Print("crew: " .. db.crew .. "  - a barátaidnak ugyanezt kell beírniuk: /kodo crew " .. arg)
-        end
+        -- 0.10.7: the crew channel is gone; the command only says so
+        Print("a crew csatorna megszűnt: " .. NEWS_PATHS)
     elseif cmd == "legend" or cmd == "legenda" then
         -- /kodo legend paladin SADISS a paladinok istene
         local class, name, title = arg:match("^(%S+)%s+(%S+)%s*(.*)$")
@@ -1153,7 +1132,7 @@ SlashCmdList.KODOTIMES = function(input)
         DEBUG = not DEBUG
         Print("debug: " .. OnOff(DEBUG) .. (DEBUG and "  - minden küldött és kapott Kodo Times-üzenetet kiír (a pozíciókat csak fogadáskor)" or ""))
     elseif cmd == "ping" then
-        -- /kodo ping            -> to every path (guild, group, friends, crew)
+        -- /kodo ping            -> to every path (guild, group, friends)
         -- /kodo ping Név        -> direct whisper to one player
         local wasDebug = DEBUG; DEBUG = true
         if arg ~= "" then RawSend("PING~" .. ns.TOKEN .. "~" .. MyName(), "WHISPER", arg) else SendAll("PING~" .. ns.TOKEN .. "~" .. MyName()) end
@@ -1169,13 +1148,9 @@ SlashCmdList.KODOTIMES = function(input)
             end
         end
         if db.friends and nf > 0 then paths[#paths + 1] = nf .. " online barát" end
-        if db.crew then
-            local id = GetChannelName(db.crew)
-            paths[#paths + 1] = "crew " .. db.crew .. ((id and id > 0) and "" or " |cffff5544(NEM vagy bent!)|r")
-        end
         if arg == "" and #paths == 0 then
-            Print("|cffff5544Nincs semmi, amin át elérnéd a többieket:|r nem vagy guildben, csapatban, nincs online barátod és nincs crew. "
-                .. "Legegyszerűbb: mindketten írjátok be: /kodo crew haverok")
+            Print("|cffff5544Nincs semmi, amin át elérnéd a többieket:|r nem vagy guildben, csapatban és nincs online barátod. "
+                .. "Lépjetek be egy guildbe, vagy hívjátok meg egymást egy csapatba.")
         else
             Print("PING elküldve: " .. (arg ~= "" and arg or table.concat(paths, ", ")) .. ". Ha a másiknál fut az addon, pár mp-en belül jön a PONG.")
         end
@@ -1189,13 +1164,9 @@ SlashCmdList.KODOTIMES = function(input)
     elseif cmd == "group" then db.group = not db.group; Print("csapatnak küldés: " .. OnOff(db.group))
     elseif cmd == "off" or cmd == "on" then db.enabled = (cmd == "on"); Print("Kodo Times: " .. OnOff(db.enabled))
     else
-        Print(format("be: %s  ·  guild: %s  ·  csapat: %s  ·  barátok: %s  ·  crew: %s  ·  hang: %s  ·  hangerő: %d%%",
-            OnOff(db.enabled), OnOff(db.guild), OnOff(db.group), OnOff(db.friends),
-            db.crew and ((char.noCrew and db.crew .. " (ezen a karakteren kihagyva)") or
-                ((GetChannelName(db.crew) or 0) > 0 and db.crew .. " |cff7fff7f(bent vagy)|r" or db.crew .. " |cffff5544(NEM vagy bent)|r")) or "nincs",
-            OnOff(db.sound), ns.Volume()))
+        Print(format("be: %s  ·  guild: %s  ·  csapat: %s  ·  barátok: %s  ·  hang: %s  ·  hangerő: %d%%",
+            OnOff(db.enabled), OnOff(db.guild), OnOff(db.group), OnOff(db.friends), OnOff(db.sound), ns.Volume()))
         print("   /kodo test            minta-hírek")
-        print("   /kodo crew <név>      közös rejtett csatorna a haveroknak (mind ugyanazt írjátok be)")
         print("   /kodo move            a felugró ablak mozgatása, a sarkánál / görgővel méretezés")
         print("   /kodo time <mp>       meddig maradjon kint (most: " .. (db.time or 6.5) .. " mp)")
         print("   /kodo volume <0-100>  az addon hangjainak hangereje (most: " .. ns.Volume() .. "%)")

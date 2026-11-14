@@ -36,9 +36,9 @@ for folder in ('KodoTimes', 'tools'):
                 if name in line:
                     failures.append(f'{rel}:{number} still has {name!r}: {line.strip()}')
 
-# kept on purpose: 0.9.x and 0.10+ clients share the message prefix and the crew channel
+# kept on purpose: 0.9.x and 0.10+ clients share the message prefix (the crew channel is gone since 0.10.7)
 pals = (root / 'KodoTimes' / 'Pals.lua').read_text(encoding='utf-8')
-for kept in ('local PREFIX = "MOTEVEPAL"', 'local DEFAULT_CREW = "MPhaverok"', 'db.crew = "MP" .. '):
+for kept in ('local PREFIX = "MOTEVEPAL"',):
     if kept not in pals:
         failures.append(f'KodoTimes/Pals.lua lost {kept!r}')
 
@@ -52,5 +52,5 @@ if failures:
     for failure in failures:
         print('  ' + failure)
     sys.exit(1)
-print('PASS: no old name left in KodoTimes/ or tools/ (changelog history aside); MOTEVEPAL prefix and MP crew channel kept; '
+print('PASS: no old name left in KodoTimes/ or tools/ (changelog history aside); MOTEVEPAL prefix kept; '
       'toast kicker reads KODO TIMES')

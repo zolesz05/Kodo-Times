@@ -35,7 +35,7 @@ Az addon új neve **Kodo Times**, a mappája `KodoTimes`. Frissítéskor:
 1. Töröld a régi `MotevePals` mappát az `Interface/AddOns/` könyvtárból, és másold be helyette a `KodoTimes` mappát.
 2. Lépj ki teljesen a játékból, és indítsd újra a klienst (a `/reload` nem elég, mert új addonmappa jött).
 
-A régi (0.9.x) beállítások nem jönnek át: a Kodo Times alapértékekkel indul (hangerő, a felugró ablak helye és mérete, a kapcsolók és a crew újra beállítandó), és minden karakternél egyszer feljön az üdvözlőablak.
+A régi (0.9.x) beállítások nem jönnek át: a Kodo Times alapértékekkel indul (hangerő, a felugró ablak helye és mérete és a kapcsolók újra beállítandók), és minden karakternél egyszer feljön az üdvözlőablak.
 
 Ha a régi, teljes addon is a helyén marad, a Kodo Times nem csinál semmit (különben minden hír kétszer jelenne meg), csak egy figyelmeztetést ír a chatbe: ilyenkor töröld a régi `MotevePals` mappát, és indítsd újra a klienst. A régi (0.9.x) és az új verziót használó haverok továbbra is látják egymás híreit és térképes helyét.
 
@@ -68,7 +68,7 @@ Az értesítések díszes fantasy keretet, hírtípusonként saját hátteret, b
 
 **Minden résztvevőnél fusson az addon**, aki híreket vagy helyzetadatokat szeretne küldeni és látni. Az addon guild-, csapat- és barátlistás kapcsolatokat, valamint a korábban megismert társaknak küldött addon-suttogásokat használ.
 
-Az első indítás üdvözlőablaka segít csatlakozni a közös haveri csatornához. Saját közös csatorna a `/kodo crew <név>` paranccsal választható; mindenkinél ugyanazt a nevet kell megadni. Az egyéni csatornán a szerver nem feltétlenül továbbítja az addonüzeneteket, ezért a megismert társak közvetlen addon-suttogással is elérhetők.
+Közös egyéni csatornát az addon a 0.10.7 óta nem használ: a korábbi haveri csatornából minden karakter egyszer automatikusan kilép. Akik se egy guildben, se egy csapatban nincsenek, vegyék fel egymást a barátlistára; a korábban megismert társak közvetlen addon-suttogással is elérhetők.
 
 Kapcsolatellenőrzéshez `/kodo ping <név>`, részletes állapothoz `/kodo diag` használható. Harc közben a hírek várakozhatnak, és harc után mennek ki. Raidben, battlegroundon és arénában a hírek küldése alapból ki van kapcsolva; a `/kodo raidhir` paranccsal állítható.
 
@@ -100,7 +100,6 @@ A beállítópanel a **Beállítások → Kiegészítők → Kodo Times** oldalo
 | `/kodo chat` | Chatbe kiírás kapcsolása (a névre kattintva suttogás) |
 | `/kodo self` | Saját hírek megjelenítésének kapcsolása |
 | `/kodo guild` / `/kodo group` / `/kodo friends` | Küldés kapcsolása az adott kapcsolatok felé |
-| `/kodo crew <név>` | Közös csatorna kiválasztása; név nélkül kikapcsolás |
 | `/kodo ping <név>` | Kapcsolat ellenőrzése egy társsal |
 | `/kodo diag` | Kapcsolati és helyzetdiagnosztika |
 | `/kodo debug` | Küldési és fogadási hibakereső kiírás kapcsolása |
@@ -163,7 +162,7 @@ A chatbe írt hírek névlinkjét (kasztszín, suttogási cél, más realmről �
 uv run --with lupa python tools/check_chatlink.py
 ```
 
-Az első indításkor felugró üdvözlő ablak szövegeit, a cím és a leírás betűméretének kicsinyítését (hogy kiférjen a sávba) és a gombok változatlan működését így ellenőrzi:
+Az első indításkor felugró üdvözlő ablak szövegeit, a cím és a leírás betűméretének kicsinyítését (hogy kiférjen a sávba) és a gombok működését (csatornába nem léptet) így ellenőrzi:
 
 ```sh
 uv run --with lupa python tools/check_welcome.py
@@ -173,6 +172,12 @@ A telepítést (a TOC, a ZIP-ben csak a `KodoTimes` mappa, nincs `MotevePals` ma
 
 ```sh
 uv run --with lupa python tools/check_install.py
+```
+
+A megszűnt crew csatornát (semmi nem megy `CHANNEL`-re, a régi `db.crew` átkerül a `db.legacyCrew`-ba, minden karakter egyszer kilép a régi csatornából, a `/kodo crew` és a `/kodo ping` kiírása) így ellenőrzi:
+
+```sh
+uv run --with lupa python tools/check_crew.py
 ```
 
 A betűtípusok ő/ű/Ő/Ű karaktereit (és hogy egy Lua-fájl se használja a Morpheust), illetve a régi nevek eltűnését így:
