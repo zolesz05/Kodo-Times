@@ -1,4 +1,4 @@
-Kodo Times 0.10.6 - WoW Forever (Interface 16001)
+Kodo Times 0.10.7 - WoW Forever (Interface 16001)
 Vicces felugró hírek a haverokról. Mindenkinek fel kell raknia, aki látni / küldeni akar.
 
 TELEPÍTÉS
@@ -8,8 +8,8 @@ TELEPÍTÉS
 FRISSÍTÉS A RÉGI VERZIÓRÓL (MotevePals 0.9.x -> KodoTimes)
   1. Töröld a régi "MotevePals" mappát az Interface\AddOns mappából, és másold be helyette a "KodoTimes" mappát.
   2. Lépj ki teljesen a játékból és indítsd újra a klienst (a /reload nem elég).
-  A régi beállítások nem jönnek át: a Kodo Times alapértékekkel indul (a felugró ablak helye, mérete, a hangerő,
-  a crew újra beállítandó), és minden karakternél egyszer feljön az üdvözlőablak.
+  A régi beállítások nem jönnek át: a Kodo Times alapértékekkel indul (a felugró ablak helye, mérete, a hangerő
+  újra beállítandó), és minden karakternél egyszer feljön az üdvözlőablak.
   Ha a régi, teljes addon is fut mellette, a Kodo Times csendben marad és figyelmeztet a chatben
   (különben minden hír kétszer jönne): töröld a régi MotevePals mappát, és indítsd újra a játékot.
   A régi és az új verziót használó haverok továbbra is látják egymás híreit és helyét a térképen.
@@ -44,14 +44,12 @@ CLASS-LEGENDÁK
 
 KIK KAPJÁK MEG
   A hír rejtett addon-üzenetként megy: a guildnek, a csapatnak / raidnek, és a barátlistádon lévő
-  online játékosoknak. Ha a haverok se egy guildben, se egy csapatban nincsenek:
-     /kodo crew valami     (mindenki ugyanazt a nevet írja be) -> közös rejtett csatorna.
-  Csak az látja, akinek fent van az addon.
+  online játékosoknak (a korábban megismert haveroknak suttogva is). Ha a haverok se egy guildben,
+  se egy csapatban nincsenek, vegyétek fel egymást barátnak. Csak az látja, akinek fent van az addon.
 
 PARANCSOK (/kodo, régi formában /mpal is)
   /kodo                 állapot és súgó
   /kodo test            minta-hírek
-  /kodo crew <név>      közös csatorna a haveroknak  (/kodo crew  üresen = kilépés)
   /kodo move            a felugró ablak mozgatása, a sarkánál (vagy görgővel) méretezés (újra /kodo move vagy a beállítások bezárása = kész)
   /kodo legend <class> <név> <cím>   class-legenda beállítása halálhírekhez
   /kodo sound           hang ki / be
@@ -189,3 +187,7 @@ TUDNIVALÓK
         pl. "Higgsbozon Lightchaser" helyett "Higgsbozon". A névre kattintva ugyanannak a karakternek nyílik suttogás.
 0.10.6: a beállításokban új "Milyen híreket lássak" blokk: hírtípusonként (szintlépés, halál, szakma, kék craft,
         epic craft, epic loot) kikapcsolható, mi jelenjen meg nálad. A küldés nem változik: a haverok minden hírt megkapnak.
+0.10.7: megszűnt a haverok közös rejtett csatornája (MPhaverok, /kodo crew <név>): a hírek és a térképes helyek már
+        csak a guilden, a csapaton / raiden és a barátlistán át (meg a korábban megismert haveroknak suttogva) mennek.
+        Az üdvözlőablak senkit nem léptet be csatornába, és belépéskor sem lép be az addon. Aki bent volt a régi
+        csatornában, azt minden karakteren egyszer kilépteti. A /kodo crew már csak annyit ír, hogy a csatorna megszűnt.

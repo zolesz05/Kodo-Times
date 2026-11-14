@@ -1,4 +1,4 @@
-"""Check the first-start welcome window: the guild texts, that they fit the banner, and the untouched buttons, flags and sound.
+"""Check the first-start welcome window: the guild texts, that they fit the banner, and the buttons (no channel), flags and sound.
 
 Runs the addon in Lua 5.1 with the stub WoW API of tools/check_volume.py; the welcome window's FontStrings get a
 simple glyph model (width = characters x size x glyph, greedy word wrap, line height = 1.2 x size).
@@ -64,6 +64,9 @@ function CreateFrame(kind, name, parent, ...)
     return f
 end
 function LeaveChannelByName(name) left[#left + 1] = name end
+function JoinTemporaryChannel(name) joined[#joined + 1] = name end
+function JoinChannelByName(name) joined[#joined + 1] = name end
+function GetChannelName() return 0 end
 function UnitFactionGroup() return "Horde", "Horde" end
 '''
 
@@ -73,6 +76,7 @@ PORTRAIT_R = TW * (0.2079 + 0.121 / 2)   # right edge of the portrait ring
 MEDALLION_X = TW * 0.8946                  # centre of the GO medallion
 KICKER = 'DUDE, WHERE IS MY KODO?'
 TITLE = 'ÜDV A KODÓKERESŐK KÖZÖTT!'
+PATHS = 'a hírek a guilden, a csapaton és a barátlistán át mennek a haverokhoz (akinél fut az addon).'
 TEXT = "Nyomj egy Let's go-t, és szólunk, ha valaki végre megtalálta a kodót, vagy ha a többiekkel valami nagyon fontos történik."
 failures = []
 
@@ -95,7 +99,6 @@ def fresh(saved=None, char=None, glyph=0.6, unbounded=True):
     for name in FILES:
         g.LoadAddonFile((root / 'KodoTimes' / name).read_text(encoding='utf-8'), name)
     g.FireEvent('ADDON_LOADED', 'KodoTimes')
-    lua.execute('NS.JoinCrew = function(report) joined[#joined + 1] = report end')
     return lua, g, g.NS
 
 
@@ -169,7 +172,7 @@ check(k.GetStringWidth(k) <= COLUMN_W, f'the top line is {k.GetStringWidth(k):.0
 check(k.point[4] == COLUMN_L and COLUMN_L > PORTRAIT_R, 'the text column starts over the portrait ring')
 check(COLUMN_L + COLUMN_W < MEDALLION_X - 30, 'the text column runs into the GO medallion')
 
-# buttons, flags, crew join and sound behave as before
+# buttons and flags: no channel joined or left, no crew set; the welcome sound as before
 _, g, ns = fresh()
 g.FireEvent('PLAYER_LOGIN')
 g.Advance(5.9)
@@ -180,21 +183,21 @@ check([p.id for p in g.played.values()] == [878], f'welcome sound plays {[p.id f
 buttons = list(g.welcomeButtons.values())
 check([b['__text'] for b in buttons] == ["Let's go!", 'Kösz, nem'], f'buttons are {[b["__text"] for b in buttons]}')
 buttons[0]['__scripts'].OnClick(buttons[0])
-check(g.KodoTimesDB.welcomed is True and g.KodoTimesChar.welcomed is True and g.KodoTimesChar.noCrew is None,
-      "Let's go! did not set welcomed / clear noCrew")
-check(g.KodoTimesDB.crew == 'MPhaverok', f"Let's go! crew is {g.KodoTimesDB.crew!r}")
-check(list(g.joined.values()) == [True], "Let's go! did not call ns.JoinCrew(true)")
-check(list(g.printed.values())[-1].endswith('a haverok csatornája: MPhaverok. Saját csapat neve kell? /kodo crew <név>'),
-      "Let's go! printed something else")
+check(g.KodoTimesDB.welcomed is True and g.KodoTimesChar.welcomed is True, "Let's go! did not set welcomed")
+check(g.KodoTimesDB.crew is None, f"Let's go! set crew to {g.KodoTimesDB.crew!r}")
+check(len(g.joined) == 0 and g.NS.JoinCrew is None, f"Let's go! joined {list(g.joined.values())}, or ns.JoinCrew still exists")
+check(list(g.printed.values())[-1].endswith(PATHS), f"Let's go! printed {list(g.printed.values())[-1]!r}")
 
 _, g, ns = fresh({'crew': 'MPkodo'})
 g.SlashCmdList.KODOTIMES('welcome')
 buttons = list(g.welcomeButtons.values())
 buttons[1]['__scripts'].OnClick(buttons[1])
-check(g.KodoTimesChar.welcomed is True and g.KodoTimesChar.noCrew is True, 'Kösz, nem did not set welcomed / noCrew')
+check(g.KodoTimesChar.welcomed is True, 'Kösz, nem did not set char.welcomed')
 check(g.KodoTimesDB.welcomed is None, 'Kösz, nem set db.welcomed')
-check(list(g.left.values()) == ['MPkodo'] and len(g.joined) == 0, 'Kösz, nem did not just leave the crew channel')
-check(list(g.printed.values())[-1].endswith('oké. Ha meggondolod: /kodo crew haverok'), 'Kösz, nem printed something else')
+check(g.KodoTimesDB.crew is None, f'Kösz, nem left crew at {g.KodoTimesDB.crew!r}')
+check(len(g.joined) == 0, f'Kösz, nem joined {list(g.joined.values())}')
+check(list(g.printed.values())[-1].endswith('oké. Az ablak újra: /kodo welcome'), f'Kösz, nem printed {list(g.printed.values())[-1]!r}')
+check(not any('/kodo crew' in line for line in g.printed.values()), 'Kösz, nem printed a /kodo crew hint')
 
 _, g, ns = fresh({'sound': False})
 g.SlashCmdList.KODOTIMES('welcome')
@@ -210,4 +213,4 @@ if failures:
     for failure in failures:
         print('  ' + failure)
     sys.exit(1)
-print('PASS: welcome window shows the "Dude where is my kodo" texts, fits the banner; buttons, flags and sound unchanged')
+print('PASS: welcome window shows the "Dude where is my kodo" texts, fits the banner; buttons join no channel, flags and sound as agreed')

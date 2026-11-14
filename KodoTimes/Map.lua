@@ -111,9 +111,9 @@ local function SendPosition(force)
     diag.lastPos = format("map %d  %.1f, %.1f", map, x * 100, y * 100)
     local msg = format("P~%d~%d~%d~%d~%s~%s~%s~%s~%s~%s", map, floor(x * 10000 + 0.5), floor(y * 10000 + 0.5),
         UnitLevel("player") or 0, class or "", dead, zone, ns.TOKEN, full, ns.MyLayer() or "")
-    ns.SendAll(msg, true)   -- guild, group, crew channel
+    ns.SendAll(msg, true)   -- guild, group
     diag.sent = diag.sent + 1; diag.lastSent = now
-    -- pals we only reach by whisper (friends not in the guild / group / crew), at most 8 per round
+    -- pals we only reach by whisper (friends not in the guild / group), at most 8 per round
     local n = 0
     for name, p in pairs(pals) do
         if n >= 8 then break end
@@ -196,7 +196,7 @@ if ChatFrame_AddMessageEventFilter and ERR_CHAT_PLAYER_NOT_FOUND_S then
     end)
 end
 
--- say hello by whisper to pals from earlier sessions and to the members of the crew channel
+-- say hello by whisper to pals from earlier sessions
 local helloed = {}
 local function HelloKnown()
     local db = ns.DB()
@@ -206,24 +206,6 @@ local function HelloKnown()
     for name in pairs(db.knownPals or {}) do
         if n >= 20 then break end
         if not helloed[name] and not ns.IsMe(name) then helloed[name] = true; n = n + 1; ns.Whisper(hello, name) end
-    end
-    -- crew channel roster (if the client gives it)
-    local id = db.crew and GetChannelName(db.crew) or 0
-    if id and id > 0 then
-        local count = 0
-        if GetNumChannelMembers then local ok, c = pcall(GetNumChannelMembers, id); if ok and c then count = c end end
-        for i = 1, math.min(count, 40) do
-            local nm
-            if C_ChatInfo and C_ChatInfo.GetChannelRosterInfo then
-                local ok, a = pcall(C_ChatInfo.GetChannelRosterInfo, id, i); if ok then nm = a end
-            end
-            if not nm and GetChannelRosterInfo then
-                local ok, a = pcall(GetChannelRosterInfo, id, i); if ok then nm = a end
-            end
-            if nm and not secret(nm) and not ns.IsMe(nm) and not helloed[nm] then
-                helloed[nm] = true; ns.Whisper(hello, nm)
-            end
-        end
     end
 end
 
@@ -533,8 +515,6 @@ function ns.MapSlash(cmd, arg)
         ns.Print("|cffffcc00diagnosztika|r")
         print(format("   név: %s  ·  megosztás: %s  ·  térkép: %s  ·  be: %s", ns.MyName and ns.MyName() or "?",
             db.share and "be" or "KI", db.map and "be" or "KI", db.enabled and "be" or "KI"))
-        local id = db.crew and GetChannelName(db.crew) or 0
-        print(format("   crew: %s  ·  csatorna-szám: %s", tostring(db.crew), tostring(id)))
         print(format("   guild: %s  ·  csapat: %s", IsInGuild() and "igen" or "nem", IsInGroup() and "igen" or "nem"))
         print("   layer: " .. (ns.MyLayer() or "ismeretlen (targetelj / nézz meg egy NPC-t)"))
         print(format("   saját hely most: %s", mp[1] == nil and "TITKOS/nincs (harc?)" or format("map %s  %.1f, %.1f", tostring(mp[1]), (mp[2] or 0) * 100, (mp[3] or 0) * 100)))
