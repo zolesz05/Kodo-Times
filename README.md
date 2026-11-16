@@ -66,9 +66,9 @@ Az értesítések díszes fantasy keretet, hírtípusonként saját hátteret, b
 
 ## Haverok elérése
 
-**Minden résztvevőnél fusson az addon**, aki híreket vagy helyzetadatokat szeretne küldeni és látni. Az addon guild-, csapat- és barátlistás kapcsolatokat, valamint a korábban megismert társaknak küldött addon-suttogásokat használ.
+**Minden résztvevőnél fusson az addon**, aki híreket vagy helyzetadatokat szeretne küldeni és látni. Az addon a 0.10.8 óta kizárólag a guilden át kommunikál: a hírek, a térképes helyek és a kapcsolatteszt is csak a guildnek mennek, suttogást, csapat- vagy raidüzenetet nem küld.
 
-Közös egyéni csatornát az addon a 0.10.7 óta nem használ: a korábbi haveri csatornából minden karakter egyszer automatikusan kilép. Akik se egy guildben, se egy csapatban nincsenek, vegyék fel egymást a barátlistára; a korábban megismert társak közvetlen addon-suttogással is elérhetők.
+Közös egyéni csatornát az addon a 0.10.7 óta nem használ: a korábbi haveri csatornából minden karakter egyszer automatikusan kilép. Guild nélküli karakteren az addon semmit nem küld (csak fogad), így offline társak miatt sem jelenik meg „No player named '…' is currently playing.” sor a chatben. Akik látni szeretnék egymást, lépjenek be egy közös guildbe.
 
 Kapcsolatellenőrzéshez `/kodo ping <név>`, részletes állapothoz `/kodo diag` használható. Harc közben a hírek várakozhatnak, és harc után mennek ki. Raidben, battlegroundon és arénában a hírek küldése alapból ki van kapcsolva; a `/kodo raidhir` paranccsal állítható.
 

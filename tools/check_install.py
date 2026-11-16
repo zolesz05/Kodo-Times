@@ -142,7 +142,7 @@ OLD_DB = {'volume': 35, 'point': 'BOTTOMRIGHT', 'relPoint': 'BOTTOMRIGHT', 'x': 
 OLD_CHAR = {'welcomed': True, 'noCrew': True, 'skills': {'Blacksmithing': 150, 'Mining': 120}}
 # what a new profile holds: DEFAULTS (toast scale 0.9) plus posVersion
 FRESH_DB = {'enabled': True, 'mapNames': False, 'quietRaidPvp': True, 'selfToast': False, 'chat': True, 'sound': True, 'volume': 100,
-            'time': 6.5, 'share': True, 'map': True, 'guild': True, 'group': True, 'friends': True,
+            'time': 6.5, 'share': True, 'map': True, 'guild': True,
             'showLevel': True, 'showDeath': True, 'showSkill': True, 'showCraftBlue': True, 'showCraftEpic': True, 'showEpicLoot': True,
             'point': 'LEFT', 'relPoint': 'LEFT', 'x': 18, 'y': -46, 'scale': 0.9, 'posVersion': 2}
 
@@ -183,10 +183,16 @@ check(g.KodoTimesToast.__scale == 0.9, f'fresh install: the toast is drawn at {g
 # prefix and slash commands: MOTEVEPAL is registered, sent and received; /kodo, /mpal and /pals are KODOTIMES
 lua, g, ns = fresh(new_db={'chat': True})
 check(list(g.registered.values()) == ['MOTEVEPAL'], f'registered prefixes {list(g.registered.values())}, expected MOTEVEPAL')
+# guild only (0.10.8): without a guild /kodo ping <name> sends nothing; in one it is a GUILD PING naming Tester2
 g.SlashCmdList.KODOTIMES('ping Tester2')
+check(len(g.sent) == 0, f'/kodo ping Tester2 without a guild sent {[(s.prefix, s.chan, s.target) for s in g.sent.values()]}')
+lua.execute('function IsInGuild() return true end')
+g.SlashCmdList.KODOTIMES('ping Tester2')
+lua.execute('function IsInGuild() return false end')
 pings = [s for s in g.sent.values() if s.msg.startswith('PING~')]
-check(len(pings) == 1 and pings[0].prefix == 'MOTEVEPAL' and pings[0].chan == 'WHISPER' and pings[0].target == 'Tester2',
-      f'/kodo ping Tester2 sent {[(s.prefix, s.chan, s.target) for s in pings]}')
+check(len(pings) == 1 and pings[0].prefix == 'MOTEVEPAL' and pings[0].chan == 'GUILD' and pings[0].target is None
+      and pings[0].msg.endswith('~Tester2'),
+      f'/kodo ping Tester2 in a guild sent {[(s.prefix, s.chan, s.target, s.msg) for s in pings]}')
 msg = '~'.join(['1', 'levelup', '77', '12', 'Barrens', '', '', '', '', '', 'MAGE', '', '', 'Miss Mcimbtyw'])
 g.FireEvent('CHAT_MSG_ADDON', 'MOTEVEPAL', msg, 'WHISPER', 'Miss-Home')
 check(any(line.startswith(PALS) and '[Miss]' in line for line in g.printed.values()), 'a MOTEVEPAL news message gave no chat line')

@@ -76,7 +76,7 @@ PORTRAIT_R = TW * (0.2079 + 0.121 / 2)   # right edge of the portrait ring
 MEDALLION_X = TW * 0.8946                  # centre of the GO medallion
 KICKER = 'DUDE, WHERE IS MY KODO?'
 TITLE = 'ÜDV A KODÓKERESŐK KÖZÖTT!'
-PATHS = 'a hírek a guilden, a csapaton és a barátlistán át mennek a haverokhoz (akinél fut az addon).'
+PATHS = 'a hírek csak a guilden át mennek a haverokhoz (akinél fut az addon). Guild nélkül nem küld semmit.'
 TEXT = "Nyomj egy Let's go-t, és szólunk, ha valaki végre megtalálta a kodót, vagy ha a többiekkel valami nagyon fontos történik."
 failures = []
 

@@ -148,7 +148,7 @@ for kind, msg in SAMPLES.items():
     _, g, ns = fresh({KIND_KEY[kind]: False})
     receive(g, msg)
     check(shown(g) == NOTHING, f'{kind} with {KIND_KEY[kind]} off: (chat, sound, toast, banner) is {shown(g)}, expected nothing')
-    check(g.NS.WhisperPals is not None and 'Miss' in list(g.KodoTimesDB.knownPals.keys()),
+    check(g.NS.PalPositions['Miss'] is not None,
           f'{kind} with {KIND_KEY[kind]} off: the sender was not noted as a pal')
 
 # the legend variant of a death (a PALADIN, the legend roll forced): shown with showDeath on, hidden with it off
