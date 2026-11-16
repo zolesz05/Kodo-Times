@@ -10,9 +10,8 @@ local OPTIONS = {
     { key = "sound",        text = "Hang a felugró híreknél",               tip = "WoW-os hang: halálnál raid warning, szintlépésnél level up.\nAlatta a hangerő: csak az addon saját hangjaié.", below = 30 },
     { key = "quietRaidPvp", text = "Raidben, BG-n, arénában ne küldjön hírt", tip = "Dungeonban továbbra is megy." },
     { head = "Kinek menjen" },
-    { key = "guild",        text = "Guild",                                 tip = "A guildtagok közül azok kapják, akiknél fut az addon." },
-    { key = "group",        text = "Csapat / raid",                         tip = "A csapattagok közül azok kapják, akiknél fut az addon." },
-    { key = "friends",      text = "Barátlista (suttogva)",                 tip = "Az online barátaid közül azok kapják, akiknél fut az addon." },
+    -- 0.10.8: guild only (no party / raid, no friend-list whispers); without a guild nothing is sent
+    { key = "guild",        text = "Guild",                                 tip = "A guildtagok közül azok kapják, akiknél fut az addon.\nA Kodo Times csak a guilden át küld: guild nélkül semmit." },
     { head = "Térkép", col = 2 },
     { key = "share",        text = "A helyem megosztása a haverokkal",      tip = "Ha kikapcsolod, a többiek nem látnak a térképen." },
     { key = "map",          text = "Haverok a világtérképen",               tip = "Kis class-színű pöttyök; egérrel rámutatva minden infó." },

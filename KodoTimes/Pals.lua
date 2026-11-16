@@ -1,8 +1,8 @@
 -- Kodo Times - friends who all run this addon get funny pop-ups about each other:
 -- level ups, deaths, profession milestones, blue / epic crafts and epic loot.
 --
--- The news travels as hidden addon messages to the guild, the group and the online people on your
--- friends list (and by whisper to the pals met earlier). Only players who have the addon see anything.
+-- The news travels as hidden addon messages to the guild, and only there: no whisper, party or raid
+-- message ever (0.10.8). Without a guild nothing is sent. Only players who have the addon see anything.
 local ADDON_NAME, ns = ...
 local C = ns.C
 local format, floor, random = string.format, math.floor, math.random
@@ -12,7 +12,7 @@ local format, floor, random = string.format, math.floor, math.random
 local PREFIX = "MOTEVEPAL"
 local DEFAULTS = {
     enabled = true, mapNames = false, quietRaidPvp = true, selfToast = false, chat = true, sound = true, volume = 100, time = 6.5, share = true, map = true,
-    guild = true, group = true, friends = true,
+    guild = true,
     -- which news show up here (the sending is not filtered: the pals get all of yours)
     showLevel = true, showDeath = true, showSkill = true, showCraftBlue = true, showCraftEpic = true, showEpicLoot = true,
     point = "LEFT", relPoint = "LEFT", x = 18, y = -46, scale = 0.9,    -- left edge, above the chat
@@ -534,7 +534,7 @@ end
 ---------------------------------------------------------------------------
 -- First start: "Kezdődjön a kaland!" - once per character
 ---------------------------------------------------------------------------
-local NEWS_PATHS = "a hírek a guilden, a csapaton és a barátlistán át mennek a haverokhoz (akinél fut az addon)."
+local NEWS_PATHS = "a hírek csak a guilden át mennek a haverokhoz (akinél fut az addon). Guild nélkül nem küld semmit."
 function ns.Welcome()
     if ns.welcomeFrame then ns.welcomeFrame:Show(); return end
     local st = STYLE.levelup
@@ -624,11 +624,14 @@ function ns.IsMe(name)
 end
 local function Clean(s) return (tostring(s or ""):gsub("[|~]", "")) end
 
--- noFriends: skip the friend-list whispers (Map.lua whispers only the pals who need it)
 local RESULT = {}
 if Enum and Enum.SendAddonMessageResult then for k, v in pairs(Enum.SendAddonMessageResult) do RESULT[v] = k end end
 local DEBUG = false
+-- the one place every message leaves through: GUILD only (0.10.8). Whispers to offline pals made the server print
+-- "No player named '...' is currently playing." for each, so nothing goes anywhere else, and without a guild (or with
+-- /kodo guild off) nothing at all. Returns true then: there is nothing to send, so ns.Deliver must not retry.
 local function RawSend(msg, chan, target)
+    if chan ~= "GUILD" or not IsInGuild() or not (db and db.guild) then return true end
     local send = C_ChatInfo and C_ChatInfo.SendAddonMessage or SendAddonMessage
     if not send then
         if DEBUG then Print("|cffff5544nincs SendAddonMessage ezen a kliensen!|r") end
@@ -644,33 +647,12 @@ local function RawSend(msg, chan, target)
 end
 ns.RawSend = RawSend
 
-local function SendAll(msg, noFriends)
-    local allGood = true
-    local function S(chan, target) if not RawSend(msg, chan, target) then allGood = false end end
-    if db.guild and IsInGuild() then S("GUILD") end
-    if db.group then
-        if IsInRaid() then S(IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or "RAID")
-        elseif IsInGroup() then S(IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or "PARTY") end
-    end
-    if not noFriends and db.friends and C_FriendList and C_FriendList.GetNumFriends then
-        local me = UnitName("player")
-        local _, myClass = UnitClass("player")
-        local n = 0
-        for i = 1, C_FriendList.GetNumFriends() do
-            local f = C_FriendList.GetFriendInfoByIndex(i)
-            if f and f.connected and f.name and f.name ~= me and n < 40 then
-                n = n + 1
-                S("WHISPER", f.name)
-            end
-        end
-    end
-    return allGood
+-- news, positions, hello and ping: to the guild (RawSend drops it without one)
+local function SendAll(msg)
+    return RawSend(msg, "GUILD")
 end
 
 ns.SendAll = SendAll
-function ns.Whisper(msg, target)
-    if target then RawSend(msg, "WHISPER", target) end
-end
 ns.Print = Print
 function ns.DB() return db end
 
@@ -725,24 +707,7 @@ end
 -- addon messages, so those wait until combat ends, and failed sends are retried
 local pending = {}
 local function DeliverNow(msg)
-    local good = SendAll(msg)
-    -- the pals we found by whisper (ping / earlier sessions) get it by whisper too:
-    -- custom channels on this server don't pass addon messages on
-    if ns.WhisperPals then
-        local friends = {}
-        if db.friends and C_FriendList and C_FriendList.GetNumFriends then
-            for i = 1, C_FriendList.GetNumFriends() do
-                local fr = C_FriendList.GetFriendInfoByIndex(i)
-                if fr and fr.connected and fr.name then friends[fr.name:lower()] = true end
-            end
-        end
-        for _, name in ipairs(ns.WhisperPals()) do
-            if not friends[name:lower()] then
-                if not RawSend(msg, "WHISPER", name) then good = false end
-            end
-        end
-    end
-    return good
+    return SendAll(msg)
 end
 local function InCombat()
     return (InCombatLockdown and InCombatLockdown()) or (UnitAffectingCombat and UnitAffectingCombat("player"))
@@ -791,10 +756,14 @@ local function OnAddonMessage(prefix, msg, chan, sender)
         local who = Ambiguate and Ambiguate(sender, "short") or sender
         if ns.IsMe(who) or p[2] == ns.TOKEN then return end
         local full = p[3] and p[3] ~= "" and p[3] or nil
+        -- both go over GUILD (0.10.8): PING~token~name~<only this player>, PONG~token~name~<the pinger's token>.
+        -- The 4th field keeps the rest of the guild quiet; an older client's PONG (a whisper) has none
+        local only = p[4] and p[4] ~= "" and p[4] or nil
+        if only and (p[1] == "PING" and not ns.IsMe(only) or p[1] == "PONG" and only ~= ns.TOKEN) then return end
         if ns.NotePal then ns.NotePal(who, chan, full) end
         if p[1] == "PING" then
             Print(format("|cff7fff7fPING jött tőle: %s (%s)|r - válaszolok", full or who, tostring(chan)))
-            RawSend("PONG~" .. ns.TOKEN .. "~" .. MyName(), "WHISPER", sender)
+            RawSend("PONG~" .. ns.TOKEN .. "~" .. MyName() .. "~" .. Clean(p[2]), "GUILD")
         else
             Print(format("|cff7fff7fPONG: %s látja az üzeneteidet (%s). Működik!|r", full or who, tostring(chan)))
         end
@@ -999,17 +968,8 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3, a4)
         -- welcome is per character: every new character gets the "Let's go" window once
         if not char.welcomed then C_Timer.After(6, function() if ns.Welcome then ns.Welcome() end end) end
         C_Timer.After(12, function()
-            if not char.welcomed or IsInGuild() or IsInGroup() then return end
-            local nf = 0
-            if C_FriendList and C_FriendList.GetNumFriends then
-                for i = 1, C_FriendList.GetNumFriends() do
-                    local f = C_FriendList.GetFriendInfoByIndex(i)
-                    if f and f.connected then nf = nf + 1 end
-                end
-            end
-            if nf == 0 then
-                Print("|cffffcc00nem éred el a haverokat|r (nincs guild, csapat vagy online barát). Lépjetek be egy guildbe, vagy hívjátok meg egymást egy csapatba.")
-            end
+            if not char.welcomed or IsInGuild() then return end
+            Print("|cffffcc00nem éred el a haverokat|r (nincs guild). A Kodo Times csak a guilden át küld: lépjetek be egy guildbe.")
         end)
     elseif e == "PLAYER_LEVEL_UP" then
         local lv = tonumber(a1) or UnitLevel("player")
@@ -1132,27 +1092,19 @@ SlashCmdList.KODOTIMES = function(input)
         DEBUG = not DEBUG
         Print("debug: " .. OnOff(DEBUG) .. (DEBUG and "  - minden küldött és kapott Kodo Times-üzenetet kiír (a pozíciókat csak fogadáskor)" or ""))
     elseif cmd == "ping" then
-        -- /kodo ping            -> to every path (guild, group, friends)
-        -- /kodo ping Név        -> direct whisper to one player
-        local wasDebug = DEBUG; DEBUG = true
-        if arg ~= "" then RawSend("PING~" .. ns.TOKEN .. "~" .. MyName(), "WHISPER", arg) else SendAll("PING~" .. ns.TOKEN .. "~" .. MyName()) end
-        DEBUG = wasDebug
-        local paths = {}
-        if db.guild and IsInGuild() then paths[#paths + 1] = "guild" end
-        if db.group and IsInGroup() then paths[#paths + 1] = "csapat" end
-        local nf = 0
-        if C_FriendList and C_FriendList.GetNumFriends then
-            for i = 1, C_FriendList.GetNumFriends() do
-                local f = C_FriendList.GetFriendInfoByIndex(i)
-                if f and f.connected then nf = nf + 1 end
-            end
-        end
-        if db.friends and nf > 0 then paths[#paths + 1] = nf .. " online barát" end
-        if arg == "" and #paths == 0 then
-            Print("|cffff5544Nincs semmi, amin át elérnéd a többieket:|r nem vagy guildben, csapatban és nincs online barátod. "
-                .. "Lépjetek be egy guildbe, vagy hívjátok meg egymást egy csapatba.")
+        -- /kodo ping            -> to the guild, everyone with the addon answers
+        -- /kodo ping Név        -> to the guild too, only that player answers (never a whisper)
+        if not IsInGuild() then
+            Print("|cffff5544Nincs semmi, amin át elérnéd a többieket:|r nem vagy guildben. "
+                .. "A Kodo Times csak a guilden át küld: lépjetek be egy guildbe.")
+        elseif not db.guild then
+            Print("|cffff5544a guildnek küldés ki van kapcsolva|r, így semmi nem megy ki. Bekapcsolás: /kodo guild")
         else
-            Print("PING elküldve: " .. (arg ~= "" and arg or table.concat(paths, ", ")) .. ". Ha a másiknál fut az addon, pár mp-en belül jön a PONG.")
+            local wasDebug = DEBUG; DEBUG = true
+            SendAll("PING~" .. ns.TOKEN .. "~" .. MyName() .. "~" .. Clean(arg))
+            DEBUG = wasDebug
+            Print("PING elküldve: guild" .. (arg ~= "" and (" (csak " .. arg .. " válaszol)") or "")
+                .. ". Ha a másiknál fut az addon, pár mp-en belül jön a PONG.")
         end
     elseif ns.MapSlash and ns.MapSlash(cmd, arg) then
         -- handled in Map.lua
@@ -1160,12 +1112,13 @@ SlashCmdList.KODOTIMES = function(input)
     elseif cmd == "chat" then db.chat = not db.chat; Print("chatbe is kiírja: " .. OnOff(db.chat))
     elseif cmd == "self" then db.selfToast = not db.selfToast; Print("a saját híreid nálad is felugranak: " .. OnOff(db.selfToast))
     elseif cmd == "guild" then db.guild = not db.guild; Print("guildnek küldés: " .. OnOff(db.guild))
-    elseif cmd == "friends" then db.friends = not db.friends; Print("barátlistának küldés: " .. OnOff(db.friends))
-    elseif cmd == "group" then db.group = not db.group; Print("csapatnak küldés: " .. OnOff(db.group))
+    elseif cmd == "friends" or cmd == "group" then
+        -- 0.10.8: no whisper, party or raid sending any more; the old switches only say so
+        Print("a Kodo Times csak a guilden át kommunikál: csapatnak és barátlistának nem küld (/kodo guild: ki/be).")
     elseif cmd == "off" or cmd == "on" then db.enabled = (cmd == "on"); Print("Kodo Times: " .. OnOff(db.enabled))
     else
-        Print(format("be: %s  ·  guild: %s  ·  csapat: %s  ·  barátok: %s  ·  hang: %s  ·  hangerő: %d%%",
-            OnOff(db.enabled), OnOff(db.guild), OnOff(db.group), OnOff(db.friends), OnOff(db.sound), ns.Volume()))
+        Print(format("be: %s  ·  guild: %s  ·  hang: %s  ·  hangerő: %d%%",
+            OnOff(db.enabled), OnOff(db.guild), OnOff(db.sound), ns.Volume()))
         print("   /kodo test            minta-hírek")
         print("   /kodo move            a felugró ablak mozgatása, a sarkánál / görgővel méretezés")
         print("   /kodo time <mp>       meddig maradjon kint (most: " .. (db.time or 6.5) .. " mp)")
@@ -1177,11 +1130,11 @@ SlashCmdList.KODOTIMES = function(input)
         print("   /kodo weed            MORE WEED! ki/be (sűrűbb fű)")
         print("   /kodo feny            Jó fények ki/be (kontraszt 80, fényerő 49, gamma 1.2)")
         print("   /kodo opciok          beállítások (Beállítások > Kiegészítők > Kodo Times)")
-        print("   /kodo ping [név]      kapcsolat-teszt (név nélkül minden csatornán)  ·  /kodo debug")
+        print("   /kodo ping [név]      kapcsolat-teszt a guildben (névvel csak ő válaszol)  ·  /kodo debug")
         print("   /kodo map | share     haverok a térképen ki/be  ·  a saját helyed megosztása ki/be")
         print("   /kodo nevek           nevek kiírva a térképen (alap: ki, csak egér rá)")
         print("   /kodo raidhir         raidben / BG-n is menjenek a hírek (alap: nem)")
-        print("   /kodo sound | chat | self | guild | group | friends   ki/be")
+        print("   /kodo sound | chat | self | guild   ki/be  (az addon csak a guilden át küld)")
         print("   /kodo on | off")
     end
 end

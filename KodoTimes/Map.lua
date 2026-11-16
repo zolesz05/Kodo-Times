@@ -3,7 +3,8 @@
 -- with their name. Works on the zone map and the continent map too (positions are projected).
 --
 -- Messages:  P~mapID~x~y~level~class~dead~zone   (x, y: 0..10000; mapID 0 = no position, e.g. in an instance)
---            H = "hello, do you run it?" (whispered to online friends at login)   h = "yes"
+--            H = "hello, do you run it?" (to the guild on joining one)   h = "yes" (from older clients)
+-- Everything goes over GUILD only (Pals.lua RawSend); without a guild nothing is sent.
 local _, ns = ...
 local format, floor, abs = string.format, math.floor, math.abs
 local secret = issecretvalue or function() return false end
@@ -12,7 +13,7 @@ local SEND_EVERY = 5        -- seconds between checks
 local HEARTBEAT = 30        -- send even if not moved
 local STALE, GONE = 90, 300 -- fade the pin after, remove after (seconds)
 
-local pals = {}             -- name -> { map, x, y, level, class, dead, zone, t, lastGroup }
+local pals = {}             -- name -> { map, x, y, level, class, dead, zone, t, display, layer }
 local diag = { sent = 0, lastSent = 0, lastPos = nil, recv = {} }   -- for /kodo diag
 ns.PalPositions = pals
 
@@ -96,6 +97,7 @@ local last = { map = -1, x = -1, y = -1, t = 0, dead = nil }
 local function SendPosition(force)
     local db = ns.DB()
     if not db or not db.enabled or not db.share then return end
+    if not IsInGuild() then return end   -- positions go to the guild only: without one there is nobody to send to
     local map, x, y, noPos = MyPosition()
     if map == nil then return end
     if noPos then map, x, y = 0, 0, 0 end
@@ -111,41 +113,8 @@ local function SendPosition(force)
     diag.lastPos = format("map %d  %.1f, %.1f", map, x * 100, y * 100)
     local msg = format("P~%d~%d~%d~%d~%s~%s~%s~%s~%s~%s", map, floor(x * 10000 + 0.5), floor(y * 10000 + 0.5),
         UnitLevel("player") or 0, class or "", dead, zone, ns.TOKEN, full, ns.MyLayer() or "")
-    ns.SendAll(msg, true)   -- guild, group
+    ns.SendAll(msg)   -- guild only
     diag.sent = diag.sent + 1; diag.lastSent = now
-    -- pals we only reach by whisper (friends not in the guild / group), at most 8 per round
-    local n = 0
-    for name, p in pairs(pals) do
-        if n >= 8 then break end
-        if p.whisper and p.heard and now - p.heard < 600 and now - (p.lastGroup or 0) > 20 then
-            ns.Whisper(msg, name); n = n + 1
-        end
-    end
-end
-
--- ask the online friends whether they run the addon too
-local asked = {}
-local function Hello()
-    local db = ns.DB()
-    if not db or not db.enabled or not db.share or not db.friends then return end
-    if not (C_FriendList and C_FriendList.GetNumFriends) then return end
-    local me = UnitName("player")
-    for i = 1, C_FriendList.GetNumFriends() do
-        local f = C_FriendList.GetFriendInfoByIndex(i)
-        if f and f.connected and f.name and f.name ~= me and not asked[f.name] then
-            asked[f.name] = true
-            ns.Whisper("H~" .. ns.TOKEN .. "~" .. (ns.MyName and ns.MyName() or ""), f.name)
-        end
-    end
-end
-
--- every pal we currently reach by whisper (heard from in the last 10 minutes)
-function ns.WhisperPals()
-    local out, now = {}, Now()
-    for name, p in pairs(pals) do
-        if p.whisper and p.heard and now - p.heard < 600 then out[#out + 1] = name end
-    end
-    return out
 end
 
 -- the longer of the routing name and the name the sender reported (one of them can be cut)
@@ -155,58 +124,16 @@ local function Better(a, b)
     return (#b > #a) and b or a
 end
 
--- remember pals across sessions, so we can whisper them at login even when channels don't deliver
-local function Remember(name, display)
-    local db = ns.DB()
-    if not db or not name then return end
-    db.knownPals = db.knownPals or {}
-    db.knownPals[name] = { d = display, t = time and time() or 0 }
-end
-
--- someone talked to us (ping/pong, news, hello): remember them; everyone we know gets our
--- position by whisper too (custom channels on this server don't always deliver addon messages)
+-- someone talked to us (ping/pong, news, hello, position): a pal for this session. A new one gets our position
+-- right away (over the guild). 0.10.8: no whispers, so pals are no longer remembered across sessions (knownPals)
 function ns.NotePal(name, chan, display)
     if not name or ns.IsMe(name) then return end
     local pal = pals[name]
     local new = not pal
     pal = pal or {}
     pals[name] = pal
-    pal.whisper = true
-    pal.heard = Now()
-    if chan ~= "WHISPER" then pal.lastGroup = Now() end
     pal.display = Better(pal.display or name, display)
-    Remember(name, pal.display)
     if new then C_Timer.After(1, function() pcall(SendPosition, true) end) end
-end
-
--- hide the "player not found" system line caused by our hidden hello whispers to offline pals
-local quietUntil = {}
-local origWhisper = ns.Whisper
-ns.Whisper = function(msg, target)
-    if target then quietUntil[target:lower()] = GetTime() + 3 end
-    return origWhisper(msg, target)
-end
-if ChatFrame_AddMessageEventFilter and ERR_CHAT_PLAYER_NOT_FOUND_S then
-    local pat = "^" .. ERR_CHAT_PLAYER_NOT_FOUND_S:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1"):gsub("%%%%s", "(.+)") .. "$"
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_SYSTEM", function(_, _, msg)
-        if type(msg) ~= "string" or secret(msg) then return false end
-        local who = msg:match(pat)
-        if who and quietUntil[who:lower()] and quietUntil[who:lower()] > GetTime() then return true end
-        return false
-    end)
-end
-
--- say hello by whisper to pals from earlier sessions
-local helloed = {}
-local function HelloKnown()
-    local db = ns.DB()
-    if not db or not db.enabled or not db.share then return end
-    local hello = "H~" .. ns.TOKEN .. "~" .. (ns.MyName and ns.MyName() or "")
-    local n = 0
-    for name in pairs(db.knownPals or {}) do
-        if n >= 20 then break end
-        if not helloed[name] and not ns.IsMe(name) then helloed[name] = true; n = n + 1; ns.Whisper(hello, name) end
-    end
 end
 
 ---------------------------------------------------------------------------
@@ -222,10 +149,8 @@ function ns.MapMessage(p, name, chan)
         or (p[2] and p[2] == ns.TOKEN) or (p[9] and p[9] == ns.TOKEN) then return true end
     ns.NotePal(name, chan, full)
     local pal = pals[name]
-    if kind == "H" then
-        ns.Whisper("h~" .. ns.TOKEN .. "~" .. (ns.MyName and ns.MyName() or ""), name)
-        C_Timer.After(1, function() SendPosition(true) end)
-    elseif kind == "h" then
+    if kind == "H" or kind == "h" then
+        -- our position over the guild is the answer (no "h" whisper since 0.10.8)
         C_Timer.After(1, function() SendPosition(true) end)
     else
         pal.map = tonumber(p[2]) or 0
@@ -469,22 +394,18 @@ local function CheckGuild(e)
 end
 
 for _, e in ipairs({ "PLAYER_LOGIN", "ZONE_CHANGED_NEW_AREA", "PLAYER_DEAD", "PLAYER_UNGHOST", "PLAYER_ALIVE",
-                     "FRIENDLIST_UPDATE", "PLAYER_GUILD_UPDATE", "GUILD_ROSTER_UPDATE" }) do
+                     "PLAYER_GUILD_UPDATE", "GUILD_ROSTER_UPDATE" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 ev:SetScript("OnEvent", function(_, e)
     if e == "PLAYER_LOGIN" then
-        if C_FriendList and C_FriendList.ShowFriends then pcall(C_FriendList.ShowFriends) end
+        -- our first position over the guild is the hello: every pal answers a new name with theirs (ns.NotePal)
         C_Timer.After(8, function()
             guildJoin.inGuild = IsInGuild() and true or false
             guildJoin.known, guildJoin.armed = true, false
-            pcall(Hello); pcall(HelloKnown); pcall(SendPosition, true)
+            pcall(SendPosition, true)
         end)
-        C_Timer.NewTicker(60, function() pcall(HelloKnown) end)
         C_Timer.NewTicker(SEND_EVERY, function() pcall(SendPosition) end)
-    elseif e == "FRIENDLIST_UPDATE" then
-        -- a friend came online: ask them too (only once per session)
-        C_Timer.After(2, function() pcall(Hello) end)
     elseif e == "PLAYER_GUILD_UPDATE" or e == "GUILD_ROSTER_UPDATE" then
         pcall(CheckGuild, e)
     else

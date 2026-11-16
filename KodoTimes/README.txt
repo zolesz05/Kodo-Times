@@ -1,4 +1,4 @@
-Kodo Times 0.10.7 - WoW Forever (Interface 16001)
+Kodo Times 0.10.8 - WoW Forever (Interface 16001)
 Vicces felugró hírek a haverokról. Mindenkinek fel kell raknia, aki látni / küldeni akar.
 
 TELEPÍTÉS
@@ -43,9 +43,8 @@ CLASS-LEGENDÁK
   (Vagy a Lines.lua-ban a LEGENDS részben. Mindenkinél a saját beállítása számít.)
 
 KIK KAPJÁK MEG
-  A hír rejtett addon-üzenetként megy: a guildnek, a csapatnak / raidnek, és a barátlistádon lévő
-  online játékosoknak (a korábban megismert haveroknak suttogva is). Ha a haverok se egy guildben,
-  se egy csapatban nincsenek, vegyétek fel egymást barátnak. Csak az látja, akinek fent van az addon.
+  A hír rejtett addon-üzenetként megy, kizárólag a guildnek (csapatnak, raidnek, barátlistának és
+  suttogva soha). Guild nélkül az addon semmit nem küld, csak fogad. Csak az látja, akinek fent van az addon.
 
 PARANCSOK (/kodo, régi formában /mpal is)
   /kodo                 állapot és súgó
@@ -56,7 +55,7 @@ PARANCSOK (/kodo, régi formában /mpal is)
   /kodo volume <0-100>  az addon saját hangjainak hangereje százalékban (alias: /kodo hangero)
   /kodo chat            a hírek a chatbe is ki / be (a névre kattintva suttoghatsz neki)
   /kodo self            a saját híreid is felugranak ki / be
-  /kodo guild | group | friends   küldés ki / be az adott helyre
+  /kodo guild           a guildnek küldés ki / be (ez az egyetlen út: kikapcsolva semmi nem megy ki)
   /kodo on | off        az egész ki / be
 
 TUDNIVALÓK
@@ -191,3 +190,7 @@ TUDNIVALÓK
         csak a guilden, a csapaton / raiden és a barátlistán át (meg a korábban megismert haveroknak suttogva) mennek.
         Az üdvözlőablak senkit nem léptet be csatornába, és belépéskor sem lép be az addon. Aki bent volt a régi
         csatornában, azt minden karakteren egyszer kilépteti. A /kodo crew már csak annyit ír, hogy a csatorna megszűnt.
+0.10.8: az addon csak a guilden át kommunikál: a hírek, a térképes hely, a hello és a ping (PONG is) csak a guildnek
+        mennek, suttogás, csapat- és raidüzenet nincs. Guild nélkül semmit nem küld, így nincs több "No player named
+        '...' is currently playing." sor a chatben. A /kodo ping <név> is a guildbe megy, és csak ő válaszol. A beállítások
+        "Csapat / raid" és "Barátlista (suttogva)" kapcsolója megszűnt, a /kodo group és /kodo friends csak ezt írja ki.

@@ -1,5 +1,8 @@
 """Check that the crew channel is gone (0.10.7): nothing is sent to a CHANNEL, no channel is joined, a stored
 db.crew moves to db.legacyCrew, and every character leaves the old channel once (char.crewGone).
+And that the addon talks over the guild only (0.10.8): every send is GUILD (no WHISPER, PARTY, RAID or
+INSTANCE_CHAT), and a character without a guild sends nothing at all - whispers to offline pals made the server print
+"No player named '...' is currently playing." for each.
 
 Runs the addon in Lua 5.1 with the stub WoW API of tools/check_volume.py, plus recorded addon messages, chat channels
 and a friends list.
@@ -92,25 +95,88 @@ def scalars(table):
     return {k: v for k, v in table.items() if isinstance(v, (str, bool, int, float))}
 
 
-# sending: SendAll, a news Announce and a position send reach the guild, the party and the friend, never a CHANNEL,
-# even with an old db.crew set again after loading and the character still in that channel
+# sending: SendAll, a news Announce and a position send reach the guild only (not the party or the online friend),
+# never a CHANNEL, even with an old db.crew set again after loading and the character still in that channel
 _, g, ns = fresh({'crew': 'MPhaverok'}, {'welcomed': True, 'crewGone': True}, {'MPhaverok': 5})
 g.KodoTimesDB.crew = 'MPhaverok'
 ns.SendAll('X~test')
 all_paths = sends(g)
-check({(c, t) for c, t, _ in all_paths} == {('GUILD', None), ('PARTY', None), ('WHISPER', 'Buddy')},
-      f'SendAll went to {[(c, t) for c, t, _ in all_paths]}, expected the guild, the party and the friend')
+check([(c, t) for c, t, _ in all_paths] == [('GUILD', None)],
+      f'SendAll went to {[(c, t) for c, t, _ in all_paths]}, expected the guild only')
 n = len(g.sent)
 g.SlashCmdList.KODOTIMES('kuld')
 news = sends(g)[n:]
 check(any(c == 'GUILD' and '~levelup~' in m for c, _, m in news), f'the news Announce did not go to the guild: {news}')
-check({c for c, _, _ in news} == {'GUILD', 'PARTY', 'WHISPER'}, f'the news Announce went to {[c for c, _, _ in news]}')
+check({c for c, _, _ in news} == {'GUILD'}, f'the news Announce went to {[c for c, _, _ in news]}')
 n = len(g.sent)
 g.FireEvent('ZONE_CHANGED_NEW_AREA')
 g.Advance(1)
 pos = sends(g)[n:]
 check(any(c == 'GUILD' and m.startswith('P~') for c, _, m in pos), f'no position was sent to the guild: {pos}')
-check({c for c, _, _ in pos} == {'GUILD', 'PARTY'}, f'the position went to {[c for c, _, _ in pos]}')
+check({c for c, _, _ in pos} == {'GUILD'}, f'the position went to {[c for c, _, _ in pos]}')
+
+
+# a whole session with the online friend, a party and a remembered pal (knownPals, now offline): the login hellos,
+# a zone change, a test news, an incoming PING, hello and position from a pal, and /kodo ping with and without a name
+OFFLINE = 'Linathel Silverwind'
+
+
+def session(in_guild):
+    _, g, ns = fresh({'knownPals': {OFFLINE: {'d': OFFLINE, 't': 100}}}, {'welcomed': True, 'crewGone': True})
+    g.inGuild = in_guild
+    g.FireEvent('PLAYER_LOGIN')
+    g.Advance(10)
+    g.FireEvent('FRIENDLIST_UPDATE')
+    g.Advance(3)
+    g.FireEvent('ZONE_CHANGED_NEW_AREA')
+    g.Advance(2)
+    g.SlashCmdList.KODOTIMES('kuld')
+    g.FireEvent('CHAT_MSG_ADDON', 'MOTEVEPAL', 'PING~abcdef~Miss Mcimbtyw', 'WHISPER', 'Miss')
+    g.FireEvent('CHAT_MSG_ADDON', 'MOTEVEPAL', 'H~abcdef~Miss Mcimbtyw', 'WHISPER', 'Miss')
+    g.FireEvent('CHAT_MSG_ADDON', 'MOTEVEPAL', 'P~1413~5000~5000~20~MAGE~0~Barrens~abcdef~Miss Mcimbtyw~', 'GUILD', 'Miss')
+    g.Advance(5)
+    g.SlashCmdList.KODOTIMES('ping')
+    g.SlashCmdList.KODOTIMES('ping ' + OFFLINE)
+    g.Advance(30)
+    return g, ns
+
+
+# no guild: not a single addon message - no whisper (so no "No player named ..." line), no party, no guild
+g, ns = session(False)
+check(len(g.sent) == 0, f'without a guild the addon sent {[(c, t, m[:12]) for c, t, m in sends(g)]}')
+ns.SendAll('X~test')
+ns.RawSend('X~test', 'WHISPER', OFFLINE)
+ns.RawSend('X~test', 'PARTY')
+check(len(g.sent) == 0, f'without a guild SendAll / RawSend sent {sends(g)}')
+check(ns.RawSend('X~test', 'WHISPER', OFFLINE) is True, 'a dropped send does not return true (ns.Deliver would retry)')
+check(ns.Whisper is None and ns.WhisperPals is None, 'ns.Whisper / ns.WhisperPals still exist')
+
+# in a guild: the same session sends over GUILD only, and something did go out (news, position, PONG, PINGs)
+g, ns = session(True)
+check(len(g.sent) > 0 and all(s.chan == 'GUILD' and s.target is None for s in g.sent.values()),
+      f'in a guild something went elsewhere than GUILD: {sorted({(c, t) for c, t, _ in sends(g)}, key=str)}')
+msgs = [m for _, _, m in sends(g)]
+for start in ('1~levelup~', 'P~', 'PONG~', 'PING~'):
+    check(any(m.startswith(start) for m in msgs), f'in a guild no {start} went to the guild: {msgs}')
+check(any(m.startswith('PONG~') and m.endswith('~abcdef') for m in msgs), f'the PONG does not name the pinger: {msgs}')
+check(any(m.startswith('PING~') and m.endswith('~' + OFFLINE) for m in msgs), f'/kodo ping <name> is not addressed: {msgs}')
+# /kodo guild off: nothing goes out even in a guild
+_, g, ns = fresh({'guild': False}, {'welcomed': True, 'crewGone': True})
+g.FireEvent('PLAYER_LOGIN')
+g.Advance(10)
+g.SlashCmdList.KODOTIMES('kuld')
+g.SlashCmdList.KODOTIMES('ping')
+check(len(g.sent) == 0, f'with /kodo guild off the addon sent {sends(g)}')
+
+# a guild PING or PONG meant for someone else: no answer, no line
+_, g, ns = fresh(None, {'welcomed': True, 'crewGone': True})
+n = len(g.printed)
+g.FireEvent('CHAT_MSG_ADDON', 'MOTEVEPAL', 'PING~abcdef~Miss Mcimbtyw~Somebodyelse', 'GUILD', 'Miss')
+g.FireEvent('CHAT_MSG_ADDON', 'MOTEVEPAL', 'PONG~abcdef~Miss Mcimbtyw~000000', 'GUILD', 'Miss')
+check(not any(s.msg.startswith('PONG~') for s in g.sent.values()), 'a PING for another player was answered')
+check(not any('PING' in line or 'PONG' in line for line in lines(g)[n:]), f'a PING / PONG for another player printed {lines(g)[n:]}')
+g.FireEvent('CHAT_MSG_ADDON', 'MOTEVEPAL', 'PONG~abcdef~Miss Mcimbtyw~' + ns.TOKEN, 'GUILD', 'Miss')
+check(any('PONG' in line for line in lines(g)[n:]), 'a PONG for us printed nothing')
 check(all(c != 'CHANNEL' for c, _, _ in sends(g)), f'something was sent to a CHANNEL: {sends(g)}')
 check(all(s.prefix == 'MOTEVEPAL' for s in g.sent.values()), 'a message left without the MOTEVEPAL prefix')
 check(ns.JoinCrew is None, 'ns.JoinCrew still exists')
@@ -198,12 +264,12 @@ check(GONE in lines(g)[-1], f'/kodo crew haverok printed {lines(g)[-1]!r}')
 g.SlashCmdList.KODOTIMES('crew')
 check(GONE in lines(g)[-1] and g.KodoTimesDB.crew is None, f'/kodo crew printed {lines(g)[-1]!r}')
 
-# /kodo ping: the guild, the group and the friend, no crew entry, even with db.crew set and the channel joined
+# /kodo ping: the guild only, no crew entry, even with db.crew set and the channel joined
 _, g, _ = fresh(None, {'welcomed': True, 'crewGone': True}, {'MPhaverok': 5})
 g.KodoTimesDB.crew = 'MPhaverok'
 g.SlashCmdList.KODOTIMES('ping')
 ping = [line for line in lines(g) if 'PING elküldve' in line]
-check(len(ping) == 1 and 'guild, csapat, 1 online barát.' in ping[0], f'/kodo ping printed {ping}')
+check(len(ping) == 1 and 'PING elküldve: guild.' in ping[0], f'/kodo ping printed {ping}')
 check(not any('crew' in line.lower() for line in lines(g)), f'/kodo ping mentions crew: {lines(g)}')
 check(all(c != 'CHANNEL' for c, _, _ in sends(g)), '/kodo ping sent to a CHANNEL')
 # no path at all: the hint names the guild and the group, not /kodo crew
@@ -234,5 +300,6 @@ if failures:
     for failure in failures:
         print('  ' + failure)
     sys.exit(1)
-print('PASS: no CHANNEL sends or joins; crew moves to legacyCrew; every character leaves the old channel once '
+print('PASS: guild only - without a guild nothing is sent, in one only GUILD (no WHISPER / PARTY); '
+      'no CHANNEL sends or joins; crew moves to legacyCrew; every character leaves the old channel once '
       '(crewGone only once it reports 0); /kodo crew, ping, status, help, diag and the login hint have no crew')
